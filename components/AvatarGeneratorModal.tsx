@@ -330,9 +330,25 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
       
       console.log("Generate API Response:", { status: response.status, data: result });
 
-      // Always store user_id when available so data is persisted even if image is delayed.
+      // Always store user_id when available
       if (result?.user_id) {
         setGeneratedUserId(result.user_id);
+      }
+
+      // Handle 202 Accepted (async processing) - immediately start polling
+      if (response.status === 202 && result?.user_id) {
+        console.log("Backend is processing asynchronously (202), starting to poll...");
+        const imageUrl = await fetchGeneratedImageUrl(result.user_id);
+        if (imageUrl) {
+          setGeneratedImageUrl(imageUrl);
+          setIsGenerated(true);
+          setIsGenerating(false);
+          return;
+        }
+        // If polling failed, show message
+        alert("Image generation in progress. Please try again in a moment.");
+        setIsGenerating(false);
+        return;
       }
 
       // Check if response is not ok (4xx, 5xx errors)
@@ -352,7 +368,14 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
 
         const errorMsg = result?.details || result?.error || "Failed to generate avatar";
         console.error("Generate API Error:", errorMsg);
-        alert(`Error: ${errorMsg}`);
+        
+        // For 504 timeout, suggest retry
+        if (response.status === 504) {
+          alert(`${errorMsg}. Please wait a moment and try again.`);
+        } else {
+          alert(`Error: ${errorMsg}`);
+        }
+        
         setIsGenerating(false);
         return;
       }

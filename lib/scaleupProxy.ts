@@ -88,7 +88,7 @@ export const handleGenerateProxy = async (request: NextRequest) => {
     const upstreamResponse = await fetch(`${baseUrl}/scaleup2026/generate`, {
       method: "POST",
       body: formData,
-      signal: AbortSignal.timeout(120000), // 120 second timeout
+      signal: AbortSignal.timeout(75000), // 75 second timeout - slightly higher than nginx 60s to catch errors
     });
 
     const contentType =
@@ -101,6 +101,19 @@ export const handleGenerateProxy = async (request: NextRequest) => {
         `Backend error (${upstreamResponse.status}):`,
         bodyText
       );
+      
+      // Handle 504 timeout - the backend might still process the request asynchronously
+      if (upstreamResponse.status === 504) {
+        console.log("Backend returned 504, will retry polling for results");
+        return NextResponse.json(
+          {
+            error: "Backend processing",
+            details: "Image is being generated. Please wait and try retrieving the result.",
+            status: 504,
+          },
+          { status: 202 } // Return 202 Accepted to indicate async processing
+        );
+      }
       
       // If backend returned empty response, provide meaningful error
       if (!bodyText || bodyText.trim() === "") {
