@@ -232,6 +232,37 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const extractFinalImageUrl = (payload: any): string => {
+    if (!payload || typeof payload !== "object") return "";
+
+    const direct =
+      payload.final_image_url ||
+      payload.generated_image_url ||
+      payload.image_url ||
+      payload?.data?.final_image_url ||
+      payload?.data?.generated_image_url ||
+      payload?.data?.image_url ||
+      payload?.result?.final_image_url ||
+      payload?.result?.generated_image_url ||
+      payload?.result?.image_url;
+
+    if (typeof direct === "string" && direct.trim()) return direct;
+
+    const details = payload?.details;
+    if (typeof details === "string") {
+      try {
+        const parsed = JSON.parse(details);
+        const nested = extractFinalImageUrl(parsed);
+        if (nested) return nested;
+      } catch {
+        const match = details.match(/https?:\/\/[^\s"']+/i);
+        if (match?.[0]) return match[0];
+      }
+    }
+
+    return "";
+  };
+
   const handleGenerate = async () => {
     // Validation
     if (!photoFile) {
@@ -335,6 +366,8 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
         setGeneratedUserId(result.user_id);
       }
 
+      const finalImageUrl = extractFinalImageUrl(result);
+
       // Handle 202 Accepted (async processing) - immediately start polling
       if (response.status === 202 && result?.user_id) {
         console.log("Backend is processing asynchronously (202), starting to poll...");
@@ -382,9 +415,9 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
 
       // Success - check various response formats
       // Backend might return: { success: true, final_image_url, user_id } OR { final_image_url, user_id }
-      if (result.final_image_url) {
-        console.log("Setting generated image URL:", result.final_image_url);
-        setGeneratedImageUrl(result.final_image_url);
+      if (finalImageUrl) {
+        console.log("Setting generated image URL:", finalImageUrl);
+        setGeneratedImageUrl(finalImageUrl);
         setIsGenerated(true);
         setIsGenerating(false);
         return;
@@ -421,10 +454,12 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
     if (!imageUrl && generatedUserId) {
       try {
         const response = await fetch(`/scaleup2026/user/${generatedUserId}`);
-        const result = await response.json();
-        if (response.ok && result.final_image_url) {
-          imageUrl = result.final_image_url;
-          setGeneratedImageUrl(result.final_image_url);
+        const text = await response.text();
+        const result = text ? JSON.parse(text) : {};
+        const fetchedUrl = extractFinalImageUrl(result);
+        if (response.ok && fetchedUrl) {
+          imageUrl = fetchedUrl;
+          setGeneratedImageUrl(fetchedUrl);
         }
       } catch (error) {
         console.error("Error fetching generated image:", error);
