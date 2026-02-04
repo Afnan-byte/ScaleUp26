@@ -1,5 +1,3 @@
-
-
 "use client";
 
 import { Instagram, MoveLeft, X } from "lucide-react";
@@ -13,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
+import AvatarGeneratorModal from "@/components/AvatarGeneratorModal";
 
 interface RegistrationModalProps {
   isOpen: boolean;
@@ -46,8 +44,10 @@ interface TicketTypeModalProps {
   loading: boolean;
 }
 
-
-export default function RegistrationModal({ isOpen, onClose }: RegistrationModalProps) {
+export default function RegistrationModal({
+  isOpen,
+  onClose,
+}: RegistrationModalProps) {
   const [formData, setFormData] = useState<FormFields>({
     name: "",
     countryCode: "+91",
@@ -59,8 +59,7 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
     previousAttendance: "",
   });
 
-  console.log("allCountries allCountries",allCountries);
-  
+  console.log("allCountries allCountries", allCountries);
 
   const [focusedField, setFocusedField] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState(false);
@@ -69,7 +68,7 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
   const [ticketID, setTicketID] = useState("");
   const [loading, setLoading] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState<TicketType | null>(null);
-
+  const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
 
   useEffect(() => {
     const handleResize = () => {
@@ -95,50 +94,49 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
     };
   }, [isOpen]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+  ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   //commented oct30
-  const handleSubmit = async(e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log("Form6666666666666666666666submitted:", formData);
-    const url = "https://api.makemypass.com/makemypass/public-form/f9290cc6-d840-4492-aefb-76f189df5f5e/validate-rsvp/";
-      const formData1 = new FormData();
-      formData1.append("name", formData.name);
-      formData1.append("phone", formData.countryCode + formData.phone);
-      formData1.append("email", formData.email);
-      formData1.append("district", formData.district);
-      formData1.append("organization", formData.organization);
-      formData1.append("category",formData.category );
-      formData1.append(
-        "did_you_attend_the_previous_scaleup_conclave_",
-        "Yes"
-      );
-      try {
-        const response = await fetch(url, {
-          method: "POST",
-          body: formData1
-        });
-        const result = await response.json();
-        console.log("Success:", result);
-        if (result.statusCode === 400) {
-          result.message?.email && toast.error(result.message?.email);
-          result.message?.phone && toast.error(result.message?.phone);
-          return;
-        }
-      } catch (error) {
-        console.error("API Error:", error);
+    const url =
+      "https://api.makemypass.com/makemypass/public-form/f9290cc6-d840-4492-aefb-76f189df5f5e/validate-rsvp/";
+    const formData1 = new FormData();
+    formData1.append("name", formData.name);
+    formData1.append("phone", formData.countryCode + formData.phone);
+    formData1.append("email", formData.email);
+    formData1.append("district", formData.district);
+    formData1.append("organization", formData.organization);
+    formData1.append("category", formData.category);
+    formData1.append("did_you_attend_the_previous_scaleup_conclave_", "Yes");
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        body: formData1,
+      });
+      const result = await response.json();
+      console.log("Success:", result);
+      if (result.statusCode === 400) {
+        result.message?.email && toast.error(result.message?.email);
+        result.message?.phone && toast.error(result.message?.phone);
+        return;
       }
+    } catch (error) {
+      console.error("API Error:", error);
+    }
     setStep("ticket");
   };
-
 
   const payWithRazorpay = (orderData: any) => {
     const options = {
       key: orderData.client_id, // from backend
-      amount: orderData.amount,   // IN PAISE (e.g. 12100)
+      amount: orderData.amount, // IN PAISE (e.g. 12100)
       currency: orderData.currency,
       name: "Scaleup Conclave 2025",
       description: "VIP Ticket Payment",
@@ -160,17 +158,18 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
               body: JSON.stringify({
                 order_id: response.razorpay_order_id,
                 payment_id: response.razorpay_payment_id,
-                "gateway":"Razorpay"
+                gateway: "Razorpay",
               }),
-            }
+            },
           );
 
           const verifyResult = await verifyRes.json();
-            console.log("toasssssssssssssssst",verifyResult)
+          console.log("toasssssssssssssssst", verifyResult);
           if (verifyRes.ok && !verifyResult.hasError) {
             toast.success("Payment successful ");
             setTicketID(verifyResult.response.event_register_id);
             setStep("success");
+            setIsAvatarModalOpen(true);
           } else {
             toast.error("Payment verification failed");
           }
@@ -194,115 +193,114 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
     rzp.open();
   };
 
-
-
   //sadasivan's code started here.
   const handleRegister = async () => {
-  setLoading(true);
+    setLoading(true);
 
-  try {
-    // ✅ Front-end validation
-    if (
-      !formData.name ||
-      !formData.email ||
-      !formData.phone ||
-      !formData.district ||
-      !formData.organization ||
-      !formData.category
-    ) {
-      toast.error("Please fill all required fields");
-      setLoading(false);
-      return;
-    }
+    try {
+      // ✅ Front-end validation
+      if (
+        !formData.name ||
+        !formData.email ||
+        !formData.phone ||
+        !formData.district ||
+        !formData.organization ||
+        !formData.category
+      ) {
+        toast.error("Please fill all required fields");
+        setLoading(false);
+        return;
+      }
 
-    const payload = new FormData();
-    payload.append("district", formData.district);
-    payload.append("name", formData.name);
-    payload.append("phone", `${formData.countryCode}${formData.phone}`);
-    payload.append("email", formData.email);
-    payload.append("organization", formData.organization);
-    payload.append("category", formData.category);
-    payload.append(
-      "did_you_attend_the_previous_scaleup_conclave_",
-      formData.previousAttendance
-    );
-    const tickets= [
+      const payload = new FormData();
+      payload.append("district", formData.district);
+      payload.append("name", formData.name);
+      payload.append("phone", `${formData.countryCode}${formData.phone}`);
+      payload.append("email", formData.email);
+      payload.append("organization", formData.organization);
+      payload.append("category", formData.category);
+      payload.append(
+        "did_you_attend_the_previous_scaleup_conclave_",
+        formData.previousAttendance,
+      );
+      const tickets = [
         {
-            ticket_id: "4afaaaaa-28fe-493c-82a6-e65f27551ded",
-            count: 1,
-            my_ticket: true,
+          ticket_id: "4afaaaaa-28fe-493c-82a6-e65f27551ded",
+          count: 1,
+          my_ticket: true,
         },
         {
-            ticket_id: "a85d92b1-0e14-4975-9ac1-f8c5194a5ac5",
-            count: 1,
-            my_ticket: true,
+          ticket_id: "a85d92b1-0e14-4975-9ac1-f8c5194a5ac5",
+          count: 1,
+          my_ticket: true,
         },
         {
-            ticket_id: "f3acf45a-f23e-41c8-9e1a-26417da55fdf",
-            count: 1,
-            my_ticket: true,
+          ticket_id: "f3acf45a-f23e-41c8-9e1a-26417da55fdf",
+          count: 1,
+          my_ticket: true,
         },
         {
-            ticket_id: "062fbabb-6242-4adc-84c4-e6e20f9434c5",
-            count: 1,
-            my_ticket: true,
+          ticket_id: "062fbabb-6242-4adc-84c4-e6e20f9434c5",
+          count: 1,
+          my_ticket: true,
         },
-    ]
+      ];
 
-    if (selectedTicket === "general") {
+      if (selectedTicket === "general") {
         payload.append("__tickets[]", JSON.stringify(tickets[0]));
-    } else if (selectedTicket === "vip") {
+      } else if (selectedTicket === "vip") {
         payload.append("__tickets[]", JSON.stringify(tickets[1]));
-    } 
+      }
 
-    payload.append(
-      "__tickets[]",
-      JSON.stringify({
-        ticket_id: selectedTicket === "vip"
-          ? "VIP_TICKET_ID"
-          : "FREE_TICKET_ID",
-        count: 1,
-        my_ticket: true,
-      })
-    );
+      payload.append(
+        "__tickets[]",
+        JSON.stringify({
+          ticket_id:
+            selectedTicket === "vip" ? "VIP_TICKET_ID" : "FREE_TICKET_ID",
+          count: 1,
+          my_ticket: true,
+        }),
+      );
 
-    const response = await fetch(
-      "https://api.makemypass.com/makemypass/public-form/f9290cc6-d840-4492-aefb-76f189df5f5e/submit/",
-      { method: "POST", body: payload }
-    );
+      //  API CALL - UNCOMMENTED FOR REAL FLOW
+      const response = await fetch(
+        "https://api.makemypass.com/makemypass/public-form/f9290cc6-d840-4492-aefb-76f189df5f5e/submit/",
+        { method: "POST", body: payload },
+      );
 
-    const result = await response.json();
-    console.log("📩 API response:", result);
+      const result = await response.json();
+      console.log(" API response:", result);
 
-    // ❌ Validation error
-    if (result.hasError) {
-      const key = Object.keys(result.message)[0];
-      toast.error(result.message[key][0]);
+      //  Validation error
+      if (result.hasError) {
+        const key = Object.keys(result.message)[0];
+        toast.error(result.message[key][0]);
+        setLoading(false);
+        return;
+      }
+
+      //  PAYMENT REQUIRED
+      if (result.response?.gateway) {
+        console.log(" Opening Razorpay");
+        payWithRazorpay(result.response);
+        setLoading(false);
+        return;
+      }
+
+      //  SUCCESS - Show success and open avatar modal with registration data
+      toast.success("Registration successful ");
+      setTicketID(
+        result.response?.event_register_id || "TEST-TICKET-" + Date.now(),
+      );
+      setStep("success");
+      setIsAvatarModalOpen(true);
+    } catch (error) {
+      toast.error("Something went wrong");
+      console.error(error);
+    } finally {
       setLoading(false);
-      return;
     }
-
-    // ✅ PAYMENT REQUIRED
-    if (result.response?.gateway) {
-      console.log("💳 Opening Razorpay");
-      payWithRazorpay(result.response);
-      setLoading(false);
-      return;
-    }
-
-    // ✅ FREE TICKET
-    toast.success("Registration successful 🎉");
-    setTicketID(result.response.event_register_id);
-    setStep("success");
-
-  } catch (error) {
-    toast.error("Something went wrong");
-    console.error(error);
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   //sadasivan's code end  here.
 
@@ -321,22 +319,13 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
     <>
       {/* Overlay */}
 
-
-
-
-
-
-
-
       <div className="fixed inset-0 z-50 backdrop-blur-sm">
         {/* Right Side Modal Container */}
         <div
           className="absolute top-1/2 md:top-1/2 lg:top-1/2 right-0 transform -translate-y-1/2 
              w-full lg:w-1/2 p-6 bg-white shadow-lg 
              max-h-[100vh] overflow-y-auto 
-             transition-transform duration-300 ease-in-out" 
-
-          
+             transition-transform duration-300 ease-in-out"
           // absolute top-1/2 lg:right-0 lg:-translate-x-0 lg:left-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-fit bg-white shadow-2xl overflow-y-auto rounded-2xl
           style={{
             // width: isMobile ? "100%" : modalWidth,
@@ -355,7 +344,6 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
             />
           )}
 
-
           {step === "ticket" && (
             <TicketTypeModal
               onClose={onClose}
@@ -368,7 +356,6 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
             />
           )}
 
-
           {/* {step === "ticket" && (
             <TicketTypeModal
               onClose={onClose}
@@ -379,30 +366,31 @@ export default function RegistrationModal({ isOpen, onClose }: RegistrationModal
 
           {step === "success" && (
             <SuccessModal
-              onClose={onClose}
+              onClose={() => {
+                onClose();
+                setIsAvatarModalOpen(true);
+              }}
               setStep={setStep}
               modalWidth={modalWidth}
-              ticketID = {ticketID}
+              ticketID={ticketID}
             />
           )}
         </div>
       </div>
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+      {/* Avatar Generator Modal */}
+      <AvatarGeneratorModal
+        isOpen={isAvatarModalOpen}
+        onClose={() => setIsAvatarModalOpen(false)}
+        registrationData={{
+          name: formData.name,
+          email: formData.email,
+          phone_no: formData.countryCode + formData.phone,
+          district: formData.district,
+          category: formData.category,
+          organization: formData.organization,
+        }}
+      />
 
       <Toaster position="top-center" reverseOrder={false} />
     </>
@@ -420,7 +408,9 @@ function RegistrationForm({
   onClose,
 }: {
   formData: FormFields;
-  handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
+  handleChange: (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+  ) => void;
   focusedField: string | null;
   setFocusedField: React.Dispatch<React.SetStateAction<string | null>>;
   getBoxStyle: (fieldName: string) => React.CSSProperties;
@@ -446,12 +436,19 @@ function RegistrationForm({
 
       {/* fixed inset-0 flex items-center justify-end z-50 */}
 
-      <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900 mt-2 text-start" style={{ fontFamily: "Plus Jakarta Sans" }}>
+      <h1
+        className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900 mt-2 text-start"
+        style={{ fontFamily: "Plus Jakarta Sans" }}
+      >
         Register Now!
       </h1>
 
-      <p className="text-sm md:text-base mt-1 font-semibold text-start" style={{color:"#3E3E3E"}}>
-        Secure your spot and be part of the excitement! Register now to receive your entry pass.
+      <p
+        className="text-sm md:text-base mt-1 font-semibold text-start"
+        style={{ color: "#3E3E3E" }}
+      >
+        Secure your spot and be part of the excitement! Register now to receive
+        your entry pass.
       </p>
 
       <form className="mt-6 space-y-5" onSubmit={handleSubmit}>
@@ -491,14 +488,13 @@ function RegistrationForm({
               <option value="+91">+91</option>
               {allCountries && allCountries.length > 0 ? (
                 allCountries.map((country, index) => (
-                  <option key={index} value={"+"+country.dialCode}>
+                  <option key={index} value={"+" + country.dialCode}>
                     +{country.dialCode}
                   </option>
                 ))
               ) : (
                 <option value="+91">+91</option>
               )}
-
             </select>
             <input
               type="tel"
@@ -599,7 +595,9 @@ function RegistrationForm({
 
         {/* Organization */}
         <div>
-          <label className="block text-sm font-medium text-gray-700">Organization</label>
+          <label className="block text-sm font-medium text-gray-700">
+            Organization
+          </label>
           <input
             type="text"
             name="organization"
@@ -656,7 +654,6 @@ const TicketTypeModal: React.FC<TicketTypeModalProps> = ({
   setSelectedTicket,
   loading,
 }) => {
-
   const handleSelect = (type: "general" | "vip") => setSelectedTicket(type);
 
   return (
@@ -669,7 +666,7 @@ const TicketTypeModal: React.FC<TicketTypeModalProps> = ({
           className="text-gray-500 hover:text-red-600 transition"
         >
           {/* <X size={20} style={{ color: "red" }} /> */}
-          <MoveLeft size={30} style={{ color: "black" }}/>
+          <MoveLeft size={30} style={{ color: "black" }} />
         </button>
 
         {/* Right: Image */}
@@ -679,7 +676,6 @@ const TicketTypeModal: React.FC<TicketTypeModalProps> = ({
           className="w-16 md:w-20 h-auto"
         />
       </div>
-
 
       {/* Top Icons */}
       <div className="flex justify-end gap-1 mb-3">
@@ -694,7 +690,10 @@ const TicketTypeModal: React.FC<TicketTypeModalProps> = ({
         <h2 className="text-3xl font-bold text-gray-900 mb-2 leading-tight">
           Select Ticket Type
         </h2>
-        <p className="text-sm  max-w-md leading-relaxed" style={{color:"#3E3E3E"}}>
+        <p
+          className="text-sm  max-w-md leading-relaxed"
+          style={{ color: "#3E3E3E" }}
+        >
           Select the type of pass that suits you best
         </p>
       </div>
@@ -707,26 +706,32 @@ const TicketTypeModal: React.FC<TicketTypeModalProps> = ({
           className={`
               group cursor-pointer transition-all duration-300 rounded-md p-6 border-2
               hover:shadow-xl active:scale-[0.98]
-              ${selectedTicket === "general"
-              ? "border-[#418CFF] bg-[#418CFF40] shadow-lg"
-              : "border-transparent bg-[#F2F2F2] hover:bg-[#418CFF40] hover:border-[#418CFF]/30"
-            }
+              ${
+                selectedTicket === "general"
+                  ? "border-[#418CFF] bg-[#418CFF40] shadow-lg"
+                  : "border-transparent bg-[#F2F2F2] hover:bg-[#418CFF40] hover:border-[#418CFF]/30"
+              }
             `}
           style={{
             minHeight: "160px",
-            boxShadow: selectedTicket === "general"
-              ? "0 8px 25px rgba(65, 140, 255, 0.2)"
-              : "0 2px 8px rgba(0,0,0,0.05)",
+            boxShadow:
+              selectedTicket === "general"
+                ? "0 8px 25px rgba(65, 140, 255, 0.2)"
+                : "0 2px 8px rgba(0,0,0,0.05)",
           }}
         >
           <div className="flex flex-col h-full justify-between">
             <div>
-              <p className="text-lg font-bold text-gray-900 mb-1">General Pass</p>
-
+              <p className="text-lg font-bold text-gray-900 mb-1">
+                General Pass
+              </p>
             </div>
             <p
-              className={`text-2xl font-black transition-colors ${selectedTicket === "general" ? "text-[#418CFF]" : "text-gray-900"
-                }`}
+              className={`text-2xl font-black transition-colors ${
+                selectedTicket === "general"
+                  ? "text-[#418CFF]"
+                  : "text-gray-900"
+              }`}
             >
               Free
             </p>
@@ -739,26 +744,25 @@ const TicketTypeModal: React.FC<TicketTypeModalProps> = ({
           className={`
               group cursor-pointer transition-all duration-300 rounded-md p-6 border-2
               hover:shadow-xl active:scale-[0.98]
-              ${selectedTicket === "vip"
-              ? "border-[#418CFF] bg-[#418CFF40] shadow-lg"
-              : "border-transparent bg-[#F2F2F2] hover:bg-[#418CFF40] hover:border-[#418CFF]/30"
-            }
+              ${
+                selectedTicket === "vip"
+                  ? "border-[#418CFF] bg-[#418CFF40] shadow-lg"
+                  : "border-transparent bg-[#F2F2F2] hover:bg-[#418CFF40] hover:border-[#418CFF]/30"
+              }
             `}
           style={{
             minHeight: "160px",
-            boxShadow: selectedTicket === "vip"
-              ? "0 8px 25px rgba(65, 140, 255, 0.2)"
-              : "0 2px 8px rgba(0,0,0,0.05)",
+            boxShadow:
+              selectedTicket === "vip"
+                ? "0 8px 25px rgba(65, 140, 255, 0.2)"
+                : "0 2px 8px rgba(0,0,0,0.05)",
           }}
         >
           <div className="flex flex-col h-full justify-between">
             <div>
               <p className="text-lg font-bold text-gray-900 mb-1">VIP Pass</p>
-
             </div>
-            <p className="text-2xl font-black text-gray-900">
-              ₹ 10,000
-            </p>
+            <p className="text-2xl font-black text-gray-900">₹ 10,000</p>
           </div>
         </div>
       </div>
@@ -781,26 +785,25 @@ const TicketTypeModal: React.FC<TicketTypeModalProps> = ({
         >
           Register
         </button>
-
       </div>
     </div>
   );
-}
+};
 /* ---------------- Success Modal ---------------- */
 function SuccessModal({
   onClose,
   setStep,
   modalWidth,
-  ticketID
+  ticketID,
 }: {
   onClose: () => void;
   setStep: React.Dispatch<React.SetStateAction<"form" | "ticket" | "success">>;
   modalWidth: string;
-  ticketID: string
+  ticketID: string;
 }) {
   return (
     // <div className="flex items-center justify-center h-full relative p-6 ">
-      
+
     //   <button
     //     onClick={() => {
     //       setStep("form");
@@ -829,59 +832,59 @@ function SuccessModal({
     //   </div>
     // </div>
 
+    <div className="flex flex-col items-center justify-center min-h-[90vh]  relative p-6">
+      <button
+        onClick={() => {
+          setStep("form");
+          onClose();
+        }}
+        className="absolute top-4 left-4 text-gray-500 hover:text-red-600 transition"
+        style={{ color: "red" }}
+      >
+        <X size={24} style={{ color: "red" }} />
+      </button>
 
-<div className="flex flex-col items-center justify-center min-h-[90vh]  relative p-6">
-  <button
-    onClick={() => {
-      setStep("form");
-      onClose();
-    }}
-    className="absolute top-4 left-4 text-gray-500 hover:text-red-600 transition"
-    style={{ color: "red" }}
-  >
-    <X size={24} style={{ color: "red" }} />
-  </button>
+      <div className="text-center mx-auto w-full max-w-md">
+        <h2 className="text-5xl font-bold mt-8" style={{ color: "#4028C8" }}>
+          {/* You’re In! */}
+          Your Ticket Is Confirmed!
+        </h2>
+        <a
+          href={`https://app.makemypass.com/scaleup-conclave-2026/view-ticket/${ticketID}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center mt-5 gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-[#4028C8] to-[#6B5CFF] text-white font-semibold shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300"
+        >
+          Download Ticket
+        </a>
 
-  <div className="text-center mx-auto w-full max-w-md">
-    <h2 className="text-5xl font-bold mt-8" style={{ color: "#4028C8" }}>
-      {/* You’re In! */}
-      Your Ticket Is Confirmed!
-    </h2>
-    <a
-  href={`https://app.makemypass.com/scaleup-conclave-2026/view-ticket/${ticketID}`}
-  target="_blank"
-  rel="noopener noreferrer"
-  className="inline-flex items-center mt-5 gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-[#4028C8] to-[#6B5CFF] text-white font-semibold shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300"
->
-  Download Ticket
-</a>
-
-    <p className="text-md mt-4" style={{ color: "#3E3E3E" }}>
-    Your spot is confirmed —A copy of your ticket has been sent to your registered WhatsApp number and email address.
-     Please check your inbox for confirmation and entry details.</p>
-    <div className="flex justify-center gap-4 mt-6 flex-wrap">
-  {/* Instagram */}
-  <a
-    href="https://www.instagram.com/scaleUp_Village"
-    target="_blank"
-    rel="noopener noreferrer"
-    className="flex items-center gap-2 px-5 py-2 rounded-full border border-[#4028C8] text-[#4028C8] hover:bg-[#4230CA]
+        <p className="text-md mt-4" style={{ color: "#3E3E3E" }}>
+          Your spot is confirmed —A copy of your ticket has been sent to your
+          registered WhatsApp number and email address. Please check your inbox
+          for confirmation and entry details.
+        </p>
+        <div className="flex justify-center gap-4 mt-6 flex-wrap">
+          {/* Instagram */}
+          <a
+            href="https://www.instagram.com/scaleUp_Village"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 px-5 py-2 rounded-full border border-[#4028C8] text-[#4028C8] hover:bg-[#4230CA]
     hover:text-white transition"
-  >
-    <Instagram size={18} color="#E4405F" />
-  
-    Follow on Instagram
-  </a>
+          >
+            <Instagram size={18} color="#E4405F" />
+            Follow on Instagram
+          </a>
 
-  {/* WhatsApp */}
-  
-  <a
-    href="https://chat.whatsapp.com/DDdiTix9PosBX7PMLrB74U"
-    target="_blank"
-    rel="noopener noreferrer"
-    className="flex items-center gap-2 px-5 py-2 rounded-full bg-green-500 text-white hover:bg-green-600 transition"
-  >
-   <svg
+          {/* WhatsApp */}
+
+          <a
+            href="https://chat.whatsapp.com/DDdiTix9PosBX7PMLrB74U"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 px-5 py-2 rounded-full bg-green-500 text-white hover:bg-green-600 transition"
+          >
+            <svg
               xmlns="http://www.w3.org/2000/svg"
               width="24"
               height="24"
@@ -895,39 +898,38 @@ function SuccessModal({
             >
               <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" />
             </svg>
-    Join WhatsApp Group
-  </a>
-</div>
+            Join WhatsApp Group
+          </a>
+        </div>
 
-
-
-
-    <div className="flex justify-center items-center mt-6">
-      <img
-        src="/assets/images/abouticons.svg"
-        alt="About Icons"
-        className="w-16 md:w-20 h-auto"
-      />
-    </div>{/* Contact Info */}
-    <div className="mt-8 text-sm text-gray-600">
-      <p className="font-medium">For any inquiries, reach out to us</p>
-      <p className="mt-2">
-        <a href="tel:+919048170077" className="hover:underline text-[#4c2cff]">
-          +91 90481 70077
-        </a>
-      </p>
-      <p>
-        <a
-          href="mailto:info@scaleupconclave.com"
-          className="hover:underline text-[#4c2cff]"
-        >
-          info@scaleupconclave.com
-        </a>
-      </p>
+        <div className="flex justify-center items-center mt-6">
+          <img
+            src="/assets/images/abouticons.svg"
+            alt="About Icons"
+            className="w-16 md:w-20 h-auto"
+          />
+        </div>
+        {/* Contact Info */}
+        <div className="mt-8 text-sm text-gray-600">
+          <p className="font-medium">For any inquiries, reach out to us</p>
+          <p className="mt-2">
+            <a
+              href="tel:+919048170077"
+              className="hover:underline text-[#4c2cff]"
+            >
+              +91 90481 70077
+            </a>
+          </p>
+          <p>
+            <a
+              href="mailto:info@scaleupconclave.com"
+              className="hover:underline text-[#4c2cff]"
+            >
+              info@scaleupconclave.com
+            </a>
+          </p>
+        </div>
+      </div>
     </div>
-  </div>
-</div>
-
-
   );
 }

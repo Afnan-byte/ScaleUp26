@@ -1,0 +1,30 @@
+    // ⚠️ API CALL COMMENTED OUT FOR TESTING MODAL WORKFLOW
+    // const response = await fetch(
+    //   "https://api.makemypass.com/makemypass/public-form/f9290cc6-d840-4492-aefb-76f189df5f5e/submit/",
+    //   { method: "POST", body: payload }
+    // );
+    //
+    // const result = await response.json();
+    // console.log("📩 API response:", result);
+
+    // ❌ Validation error
+    // if (result.hasError) {
+    //   const key = Object.keys(result.message)[0];
+    //   toast.error(result.message[key][0]);
+    //   setLoading(false);
+    //   return;
+    // }
+
+    // ✅ PAYMENT REQUIRED
+    // if (result.response?.gateway) {
+    //   console.log("💳 Opening Razorpay");
+    //   payWithRazorpay(result.response);
+    //   setLoading(false);
+    //   return;
+    // }
+
+    // ✅ TESTING MODE - Skip API, go directly to success
+    toast.success("Registration successful 🎉");
+    setTicketID("TEST-TICKET-" + Date.now());
+    setStep("success");
+    setIsAvatarModalOpen(true);

@@ -86,7 +86,7 @@ function Hero() {
             <div className="flex items-center justify-center bg-[#3399FF] rounded-full w-[70px] h-[70px] md:w-[100px] md:h-[100px] shrink-0">
               <svg width="104" height="104" viewBox="0 0 104 104" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <circle cx="51.8322" cy="51.8327" r="51.8322" />
-                <path d="M41.832 29.0979L63.9735 45.704C66.0634 47.2715 67.2935 49.7315 67.2935 52.3439V52.3439C67.2935 54.8909 66.1241 57.2968 64.1214 58.8703L41.832 76.3834" stroke="black" stroke-width="7.27469" />
+                <path d="M41.832 29.0979L63.9735 45.704C66.0634 47.2715 67.2935 49.7315 67.2935 52.3439V52.3439C67.2935 54.8909 66.1241 57.2968 64.1214 58.8703L41.832 76.3834" stroke="black" strokeWidth="7.27469" />
               </svg>
 
             </div>
