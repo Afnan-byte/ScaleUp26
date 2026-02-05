@@ -8,6 +8,7 @@ import {
   DialogTitle,
   DialogClose,
 } from "@/components/ui/dialog";
+import { toast, Toaster } from "react-hot-toast";
 import { allCountries } from "country-telephone-data";
 import {
   Select,
@@ -134,7 +135,7 @@ export function AiModalPop({ showFloatingIcon = true }: AiModalPopProps) {
 
   const handleSendOtp = async () => {
     if (!phone.trim()) {
-      alert("Please enter a phone number");
+      toast.error("Please enter a phone number");
       return;
     }
 
@@ -165,7 +166,7 @@ export function AiModalPop({ showFloatingIcon = true }: AiModalPopProps) {
 
       if (validateResponse.status === 200) {
         openRegistrationModal();
-        alert("You are not registered. Please complete registration first.");
+        toast.error("You are not registered. Please complete registration first.");
         setLoading(false);
         setShowPhoneModal(false);
         return;
@@ -181,7 +182,7 @@ export function AiModalPop({ showFloatingIcon = true }: AiModalPopProps) {
 
         setShouldOpenAvatarAfterOtp(true);
       } else {
-        alert("Unable to verify registration. Please try again.");
+        toast.error("Unable to verify registration. Please try again.");
         setLoading(false);
         return;
       }
@@ -201,15 +202,15 @@ export function AiModalPop({ showFloatingIcon = true }: AiModalPopProps) {
       if (response.ok) {
         setOtpSent(true);
         setTimeLeft(600);
-        alert("OTP sent to your phone number");
+        toast.success("OTP sent to your phone number");
       } else {
-        alert(
+        toast.error(
           `Failed to send OTP: ${responseData.error || "Please try again"}`,
         );
       }
     } catch (error) {
       console.error("Error sending OTP:", error);
-      alert("Error sending OTP. Please try again.");
+      toast.error("Error sending OTP. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -217,7 +218,7 @@ export function AiModalPop({ showFloatingIcon = true }: AiModalPopProps) {
 
   const handleVerifyOtp = async () => {
     if (!otp.trim()) {
-      alert("Please enter OTP");
+      toast.error("Please enter OTP");
       return;
     }
 
@@ -269,18 +270,18 @@ export function AiModalPop({ showFloatingIcon = true }: AiModalPopProps) {
           return;
         }
 
-        alert("Phone number verified successfully!");
+        toast.success("Phone number verified successfully!");
         if (shouldOpenAvatarAfterOtp) {
           handleOpenAvatarGenerator();
         } else {
           setShowPhoneModal(false);
         }
       } else {
-        alert(`Invalid OTP: ${responseData.error || "Please try again"}`);
+        toast.error(`Invalid OTP: ${responseData.error || "Please try again"}`);
       }
     } catch (error) {
       console.error("Error verifying OTP:", error);
-      alert("Error verifying OTP. Please try again.");
+      toast.error("Error verifying OTP. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -359,12 +360,13 @@ export function AiModalPop({ showFloatingIcon = true }: AiModalPopProps) {
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error("Error downloading image:", error);
-      alert("Error downloading image. Please try again.");
+      toast.error("Error downloading image. Please try again.");
     }
   };
 
   return (
     <>
+      <Toaster position="top-center" reverseOrder={false} />
       {/* Initial AI Modal - appears after 2 minutes */}
       <Dialog open={showInitialModal} onOpenChange={setShowInitialModal}>
         <DialogContent
