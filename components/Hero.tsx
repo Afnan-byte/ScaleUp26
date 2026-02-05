@@ -8,7 +8,10 @@ function Hero() {
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   useEffect(() => {
     const handler = () => setIsRegisterModalOpen(true);
-    window.addEventListener("open-registration-modal", handler as EventListener);
+    window.addEventListener(
+      "open-registration-modal",
+      handler as EventListener,
+    );
     return () =>
       window.removeEventListener(
         "open-registration-modal",

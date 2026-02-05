@@ -11,17 +11,17 @@ import Marque from "@/components/Marque";
 
 export default function Home() {
   const [open, setOpen] = useState(false);
-  const hasShown = useRef(false); 
+  const hasShown = useRef(false);
 
   useEffect(() => {
-    if (hasShown.current) return; 
+    if (hasShown.current) return;
 
     const timer = setTimeout(() => {
       setOpen(true);
       if (typeof window !== "undefined") {
         window.dispatchEvent(new CustomEvent("whatsapp-modal-opened"));
       }
-      hasShown.current = true; 
+      hasShown.current = true;
     }, 6000);
 
     return () => clearTimeout(timer);
@@ -29,7 +29,7 @@ export default function Home() {
   return (
     <main className="flex flex-col overflow-hidden">
       <Navbar />
-      <Marque/>
+      <Marque />
       <Hero />
       <Date />
       <Banner />

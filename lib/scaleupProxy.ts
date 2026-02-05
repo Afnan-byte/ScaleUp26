@@ -306,7 +306,7 @@ export const handleOtpGenerateProxy = async (request: NextRequest) => {
 
   const payload = await readJsonBody(request);
   console.log("OTP Generate - Received payload:", payload);
-  
+
   if (!payload?.phoneNumber) {
     console.log("OTP Generate - Missing phoneNumber in payload");
     return NextResponse.json(
@@ -314,7 +314,7 @@ export const handleOtpGenerateProxy = async (request: NextRequest) => {
       { status: 400 },
     );
   }
-  
+
   console.log("OTP Generate - Phone number:", payload.phoneNumber);
 
   const baseUrl = getBaseUrl();
@@ -352,7 +352,7 @@ export const handleOtpGenerateProxy = async (request: NextRequest) => {
       upstreamResponse.headers.get("content-type") || "application/json";
     const body = await upstreamResponse.arrayBuffer();
     const bodyText = new TextDecoder().decode(body);
-    
+
     console.log("OTP Generate - Backend response status:", upstreamResponse.status);
     console.log("OTP Generate - Backend response body:", bodyText);
 
@@ -424,7 +424,7 @@ export const handleOtpVerifyProxy = async (request: NextRequest) => {
       upstreamResponse.headers.get("content-type") || "application/json";
     const body = await upstreamResponse.arrayBuffer();
     const bodyText = new TextDecoder().decode(body);
-    
+
     console.log("OTP Verify - Backend response status:", upstreamResponse.status);
     console.log("OTP Verify - Backend response body:", bodyText);
 

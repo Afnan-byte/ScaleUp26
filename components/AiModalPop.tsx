@@ -117,9 +117,7 @@ export function AiModalPop({ showFloatingIcon = true }: AiModalPopProps) {
     if (!phoneValue || typeof window === "undefined") return "";
     try {
       return (
-        localStorage.getItem(
-          `scaleup2026:final_image_url:${phoneValue}`,
-        ) || ""
+        localStorage.getItem(`scaleup2026:final_image_url:${phoneValue}`) || ""
       );
     } catch (error) {
       console.error("Failed to read stored image URL:", error);
@@ -151,7 +149,10 @@ export function AiModalPop({ showFloatingIcon = true }: AiModalPopProps) {
       validatePayload.append("phone", combined);
       validatePayload.append("district", FIXED_VALIDATE_PAYLOAD.district);
       validatePayload.append("category", FIXED_VALIDATE_PAYLOAD.category);
-      validatePayload.append("organization", FIXED_VALIDATE_PAYLOAD.organization);
+      validatePayload.append(
+        "organization",
+        FIXED_VALIDATE_PAYLOAD.organization,
+      );
       validatePayload.append(
         "did_you_attend_the_previous_scaleup_conclave_",
         FIXED_VALIDATE_PAYLOAD.did_you_attend_the_previous_scaleup_conclave_,
@@ -202,7 +203,9 @@ export function AiModalPop({ showFloatingIcon = true }: AiModalPopProps) {
         setTimeLeft(600);
         alert("OTP sent to your phone number");
       } else {
-        alert(`Failed to send OTP: ${responseData.error || 'Please try again'}`);
+        alert(
+          `Failed to send OTP: ${responseData.error || "Please try again"}`,
+        );
       }
     } catch (error) {
       console.error("Error sending OTP:", error);
@@ -222,7 +225,7 @@ export function AiModalPop({ showFloatingIcon = true }: AiModalPopProps) {
     try {
       const combined = countryCode + phone;
       console.log("Verifying OTP for:", combined, "OTP:", otp);
-      
+
       const response = await fetch("/scaleup2026/otp/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -238,23 +241,25 @@ export function AiModalPop({ showFloatingIcon = true }: AiModalPopProps) {
 
       if (response.ok) {
         const combined = countryCode + phone;
-        
+
         // Check if backend response contains generated_image_url (nested in user object)
-        const backendImageUrl = responseData.user?.generated_image_url || responseData.generated_image_url;
+        const backendImageUrl =
+          responseData.user?.generated_image_url ||
+          responseData.generated_image_url;
         if (backendImageUrl) {
           console.log("Backend returned image URL:", backendImageUrl);
           // Store it in localStorage for future use
           if (typeof window !== "undefined") {
             localStorage.setItem(
               `scaleup2026:final_image_url:${combined}`,
-              backendImageUrl
+              backendImageUrl,
             );
           }
           handleShowExistingImage(backendImageUrl);
           setLoading(false);
           return;
         }
-        
+
         // Check if there's already a generated image URL in localStorage
         const storedUrl = getStoredImageUrl(combined);
         if (storedUrl) {
@@ -263,7 +268,7 @@ export function AiModalPop({ showFloatingIcon = true }: AiModalPopProps) {
           setLoading(false);
           return;
         }
-        
+
         alert("Phone number verified successfully!");
         if (shouldOpenAvatarAfterOtp) {
           handleOpenAvatarGenerator();
@@ -271,7 +276,7 @@ export function AiModalPop({ showFloatingIcon = true }: AiModalPopProps) {
           setShowPhoneModal(false);
         }
       } else {
-        alert(`Invalid OTP: ${responseData.error || 'Please try again'}`);
+        alert(`Invalid OTP: ${responseData.error || "Please try again"}`);
       }
     } catch (error) {
       console.error("Error verifying OTP:", error);
@@ -327,7 +332,9 @@ export function AiModalPop({ showFloatingIcon = true }: AiModalPopProps) {
 
   // Get selected country display name
   const getSelectedCountryDisplay = () => {
-    const country = allCountries.find((c: any) => c.dialCode === selectedCountry);
+    const country = allCountries.find(
+      (c: any) => c.dialCode === selectedCountry,
+    );
     return country ? `${country.dialCode} ${country.name}` : selectedCountry;
   };
 
@@ -370,11 +377,7 @@ export function AiModalPop({ showFloatingIcon = true }: AiModalPopProps) {
           <DialogClose asChild />
           <DialogHeader className="flex flex-col items-center text-center space-y-2">
             <div className="p-2 md:p-3 rounded-full bg-purple-500 text-white">
-              <img
-                src="/AI.svg"
-                alt="AI"
-                className="h-5 w-5 md:h-7 md:w-7"
-              />
+              <img src="/AI.svg" alt="AI" className="h-5 w-5 md:h-7 md:w-7" />
             </div>
 
             <DialogTitle className="text-lg font-[700]">
@@ -456,15 +459,20 @@ export function AiModalPop({ showFloatingIcon = true }: AiModalPopProps) {
                         </div>
                         <div className="max-h-60 overflow-y-auto">
                           {filteredCountries.length > 0 ? (
-                            filteredCountries.map((country: any, index: number) => (
-                              <SelectItem 
-                                key={`${country.iso2 || country.name}-${index}`} 
-                                value={country.dialCode}
-                                className="cursor-pointer"
-                              >
-                                <span className="font-medium">{country.dialCode}</span> {country.name}
-                              </SelectItem>
-                            ))
+                            filteredCountries.map(
+                              (country: any, index: number) => (
+                                <SelectItem
+                                  key={`${country.iso2 || country.name}-${index}`}
+                                  value={country.dialCode}
+                                  className="cursor-pointer"
+                                >
+                                  <span className="font-medium">
+                                    {country.dialCode}
+                                  </span>{" "}
+                                  {country.name}
+                                </SelectItem>
+                              ),
+                            )
                           ) : (
                             <div className="px-3 py-2 text-sm text-gray-500">
                               No countries found
@@ -498,7 +506,8 @@ export function AiModalPop({ showFloatingIcon = true }: AiModalPopProps) {
                     Enter OTP
                   </label>
                   <p className="text-xs text-gray-500">
-                    OTP sent to {countryCode}{phone}
+                    OTP sent to {countryCode}
+                    {phone}
                   </p>
                   <input
                     type="text"
