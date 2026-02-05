@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import Script from "next/script";
+import AiModalPop from "@/components/AiModalPop";
 
 export const metadata: Metadata = {
   title: "ScaleUp Conclave",
   description: "ScaleUp Conclave - 2026",
   icons: {
-    icon: "/favicon.ico", 
+    icon: "/favicon.ico",
   },
 };
 
@@ -24,6 +25,8 @@ export default function RootLayout({
           strategy="afterInteractive"
         />
         {children}
+        {/* AI Image Generation Modal */}
+        <AiModalPop showFloatingIcon={true} />
       </body>
     </html>
   );

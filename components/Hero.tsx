@@ -1,11 +1,20 @@
 "use client";
 import { ChevronRight } from "lucide-react";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 import Registration from "./Registration";
 
 function Hero() {
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
+  useEffect(() => {
+    const handler = () => setIsRegisterModalOpen(true);
+    window.addEventListener("open-registration-modal", handler as EventListener);
+    return () =>
+      window.removeEventListener(
+        "open-registration-modal",
+        handler as EventListener,
+      );
+  }, []);
   return (
     <section className="w-full flex flex-col items-center px-2 py-2 relative overflow-hidden">
       {/* --- RESPONSIVE HEADING SECTION --- */}
@@ -38,7 +47,7 @@ function Hero() {
           </span>{" "}
           <span
             className="font-gilmer tracking-tight sm:text-[56.63px] md:text-[100px] lg:text-[150px] xl:text-[190px]"
-          // style={{ fontWeight: "700" }}
+            // style={{ fontWeight: "700" }}
           >
             Ai Summit
           </span>
@@ -84,11 +93,20 @@ function Hero() {
           <div className="flex lg:grid items-center gap-6 mt-10">
             {/* Updated Blue Circle Icon to match the Green Button Icon style */}
             <div className="flex items-center justify-center bg-[#3399FF] rounded-full w-[70px] h-[70px] md:w-[100px] md:h-[100px] shrink-0">
-              <svg width="104" height="104" viewBox="0 0 104 104" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <svg
+                width="104"
+                height="104"
+                viewBox="0 0 104 104"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
                 <circle cx="51.8322" cy="51.8327" r="51.8322" />
-                <path d="M41.832 29.0979L63.9735 45.704C66.0634 47.2715 67.2935 49.7315 67.2935 52.3439V52.3439C67.2935 54.8909 66.1241 57.2968 64.1214 58.8703L41.832 76.3834" stroke="black" strokeWidth="7.27469" />
+                <path
+                  d="M41.832 29.0979L63.9735 45.704C66.0634 47.2715 67.2935 49.7315 67.2935 52.3439V52.3439C67.2935 54.8909 66.1241 57.2968 64.1214 58.8703L41.832 76.3834"
+                  stroke="black"
+                  strokeWidth="7.27469"
+                />
               </svg>
-
             </div>
 
             {/* Text Section */}
@@ -122,7 +140,6 @@ function Hero() {
                 className="w-8 h-8 group-hover:translate-x-1 transition-transform" 
               /> */}
             </button>
-
           </div>
           {/* Buttons for MOBILE/TABLET VIEW */}
           <div className="mt-8 flex flex-col md:flex-row items-start gap-3 lg:hidden">
@@ -156,21 +173,20 @@ function Hero() {
 
         {/* Bottom Section of Card */}
         <div className="mt-8 md:mt-0 w-[581px] hidden lg:flex flex-col items-center">
+          {/* Top Icon */}
+          <div className="hidden md:flex justify-center mb-3">
+            <img
+              src="/assets/images/img_icon2.svg"
+              alt="icons"
+              className="mt-22 w-16 sm:w-10 md:w-[120px]"
+            />
+          </div>
 
-{/* Top Icon */}
-<div className="hidden md:flex justify-center mb-3">
-  <img
-    src="/assets/images/img_icon2.svg"
-    alt="icons"
-    className="mt-22 w-16 sm:w-10 md:w-[120px]"
-  />
-</div>
-
-{/* Register Button */}
-<div className="flex mb-2 mt-10">
-  <button
-    onClick={() => setIsRegisterModalOpen(true)}
-    className="w-[441px] xl:w-[481px]
+          {/* Register Button */}
+          <div className="flex mb-2 mt-10">
+            <button
+              onClick={() => setIsRegisterModalOpen(true)}
+              className="w-[441px] xl:w-[481px]
       flex items-center justify-between
       bg-[#9df094] hover:bg-[#b0f5a8]
       text-black font-semibold text-xl md:text-[36px]
@@ -178,46 +194,48 @@ function Hero() {
       rounded-l-xl rounded-r-[50px]
       transition-all duration-200 active:scale-95
       group relative"
-  >
-    <span className="mr-6 tracking-tight">Book Tickets Now</span>
-    <img
-      src="/assets/images/arrow_circle.svg"
-      alt="arrow button"
-      className="w-12 md:w-18 absolute right-0"
-    />
-  </button>
-</div>
+            >
+              <span className="mr-6 tracking-tight">Book Tickets Now</span>
+              <img
+                src="/assets/images/arrow_circle.svg"
+                alt="arrow button"
+                className="w-12 md:w-18 absolute right-0"
+              />
+            </button>
+          </div>
 
-{/* Date & Location */}
-<div className="hidden lg:flex flex-col md:flex-row items-center gap-2 mt-10">
-  <button
-    className="font-gilmer flex items-center gap-2 px-4 py-3 rounded-tl-3xl rounded-tr-3xl rounded-bl-3xl h-[50px]"
-    style={{ backgroundColor: "#3F26DB", color: "#FFFFFF" }}
-  >
-    <img src="/assets/images/calender.svg" alt="calendar" width={18} height={18} />
-    March 25th & 26th, 2026
-  </button>
+          {/* Date & Location */}
+          <div className="hidden lg:flex flex-col md:flex-row items-center gap-2 mt-10">
+            <button
+              className="font-gilmer flex items-center gap-2 px-4 py-3 rounded-tl-3xl rounded-tr-3xl rounded-bl-3xl h-[50px]"
+              style={{ backgroundColor: "#3F26DB", color: "#FFFFFF" }}
+            >
+              <img
+                src="/assets/images/calender.svg"
+                alt="calendar"
+                width={18}
+                height={18}
+              />
+              March 25th & 26th, 2026
+            </button>
 
-  <button
-    className="font-gilmer flex flex-col justify-center px-4 py-3 rounded-tl-3xl rounded-tr-3xl rounded-br-3xl h-[50px] leading-tight text-sm"
-    style={{
-      backgroundColor: "transparent",
-      border: "1px solid #4B4DFF",
-      color: "#FFFFFF",
-    }}
-  >
-    Shifa Convention Center
-    <span className="font-gilmer text-xs leading-tight">
-      Perinthalmanna
-    </span>
-  </button>
-</div>
-
-</div>
+            <button
+              className="font-gilmer flex flex-col justify-center px-4 py-3 rounded-tl-3xl rounded-tr-3xl rounded-br-3xl h-[50px] leading-tight text-sm"
+              style={{
+                backgroundColor: "transparent",
+                border: "1px solid #4B4DFF",
+                color: "#FFFFFF",
+              }}
+            >
+              Shifa Convention Center
+              <span className="font-gilmer text-xs leading-tight">
+                Perinthalmanna
+              </span>
+            </button>
+          </div>
+        </div>
 
         {/* Buttons for DESKTOP VIEW */}
-
-
       </div>
       <Registration
         isOpen={isRegisterModalOpen}

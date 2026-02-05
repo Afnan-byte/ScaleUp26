@@ -22,7 +22,7 @@ const getBaseUrl = () => {
     return baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
   }
 
-  return "http://13.127.247.90";
+  return "https://conclave2026.vercel.app";
 };
 
 export const handleGenerateProxy = async (request: NextRequest) => {
@@ -101,7 +101,7 @@ export const handleGenerateProxy = async (request: NextRequest) => {
         `Backend error (${upstreamResponse.status}):`,
         bodyText
       );
-      
+
       // Handle 504 timeout - the backend might still process the request asynchronously
       if (upstreamResponse.status === 504) {
         console.log("Backend returned 504, will retry polling for results");
@@ -114,7 +114,7 @@ export const handleGenerateProxy = async (request: NextRequest) => {
           { status: 202 } // Return 202 Accepted to indicate async processing
         );
       }
-      
+
       // If backend returned empty response, provide meaningful error
       if (!bodyText || bodyText.trim() === "") {
         return NextResponse.json(
@@ -125,7 +125,7 @@ export const handleGenerateProxy = async (request: NextRequest) => {
           { status: upstreamResponse.status }
         );
       }
-      
+
       // Try to parse backend error as JSON, fallback to plain text
       try {
         const errorData = JSON.parse(bodyText);
@@ -149,7 +149,7 @@ export const handleGenerateProxy = async (request: NextRequest) => {
           { status: 502 }
         );
       }
-      
+
       try {
         JSON.parse(bodyText); // Validate JSON
       } catch {
@@ -172,7 +172,7 @@ export const handleGenerateProxy = async (request: NextRequest) => {
     });
   } catch (error: any) {
     console.error("Failed to reach backend:", error);
-    
+
     if (error.name === "TimeoutError" || error.name === "AbortError") {
       return NextResponse.json(
         {
@@ -277,13 +277,169 @@ export const handleUserProxy = async (request: NextRequest) => {
     });
   } catch (error: any) {
     console.error("Failed to reach backend (GET):", error);
-    
+
     return NextResponse.json(
       {
         error: "Backend unreachable",
         details: "Unable to retrieve image. Please try again later.",
       },
       { status: 502 }
+    );
+  }
+};
+
+const readJsonBody = async (request: NextRequest) => {
+  try {
+    return await request.json();
+  } catch {
+    return null;
+  }
+};
+
+export const handleOtpGenerateProxy = async (request: NextRequest) => {
+  if (request.method !== "POST") {
+    return NextResponse.json(
+      { error: "Method Not Allowed" },
+      { status: 405 },
+    );
+  }
+
+  const payload = await readJsonBody(request);
+  console.log("OTP Generate - Received payload:", payload);
+  
+  if (!payload?.phoneNumber) {
+    console.log("OTP Generate - Missing phoneNumber in payload");
+    return NextResponse.json(
+      { error: "phoneNumber is required" },
+      { status: 400 },
+    );
+  }
+  
+  console.log("OTP Generate - Phone number:", payload.phoneNumber);
+
+  const baseUrl = getBaseUrl();
+  if (!baseUrl) {
+    return NextResponse.json(
+      {
+        error: "OTP service not configured",
+        details: "Set SCALEUP_API_BASE_URL to your backend service URL.",
+      },
+      { status: 501 },
+    );
+  }
+
+  // Transform payload: Try multiple parameter names to find what backend expects
+  const backendPayload = {
+    phone_number: payload.phoneNumber,
+    phone: payload.phoneNumber,
+    phoneNumber: payload.phoneNumber,
+    phone_no: payload.phoneNumber,
+    mobile: payload.phoneNumber,
+    phoneNo: payload.phoneNumber,
+  };
+
+  console.log("OTP Generate - Sending to backend:", backendPayload);
+
+  try {
+    const upstreamResponse = await fetch(`${baseUrl}/scaleup2026/otp/generate`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(backendPayload),
+      signal: AbortSignal.timeout(30000),
+    });
+
+    const contentType =
+      upstreamResponse.headers.get("content-type") || "application/json";
+    const body = await upstreamResponse.arrayBuffer();
+    const bodyText = new TextDecoder().decode(body);
+    
+    console.log("OTP Generate - Backend response status:", upstreamResponse.status);
+    console.log("OTP Generate - Backend response body:", bodyText);
+
+    return new NextResponse(body, {
+      status: upstreamResponse.status,
+      headers: { "content-type": contentType },
+    });
+  } catch (error: any) {
+    console.error("Failed to reach backend (OTP generate):", error);
+    return NextResponse.json(
+      {
+        error: "Backend unreachable",
+        details: "Unable to send OTP. Please try again later.",
+      },
+      { status: 502 },
+    );
+  }
+};
+
+export const handleOtpVerifyProxy = async (request: NextRequest) => {
+  if (request.method !== "POST") {
+    return NextResponse.json(
+      { error: "Method Not Allowed" },
+      { status: 405 },
+    );
+  }
+
+  const payload = await readJsonBody(request);
+  if (!payload?.phoneNumber || !payload?.otp) {
+    return NextResponse.json(
+      { error: "phoneNumber and otp are required" },
+      { status: 400 },
+    );
+  }
+
+  const baseUrl = getBaseUrl();
+  if (!baseUrl) {
+    return NextResponse.json(
+      {
+        error: "OTP service not configured",
+        details: "Set SCALEUP_API_BASE_URL to your backend service URL.",
+      },
+      { status: 501 },
+    );
+  }
+
+  // Transform payload: Try multiple parameter names to find what backend expects
+  const backendPayload = {
+    phone_number: payload.phoneNumber,
+    phone: payload.phoneNumber,
+    phoneNumber: payload.phoneNumber,
+    phone_no: payload.phoneNumber,
+    mobile: payload.phoneNumber,
+    phoneNo: payload.phoneNumber,
+    otp: payload.otp,
+  };
+
+  console.log("OTP Verify - Sending to backend:", backendPayload);
+
+  try {
+    const upstreamResponse = await fetch(`${baseUrl}/scaleup2026/otp/verify`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(backendPayload),
+      signal: AbortSignal.timeout(30000),
+    });
+
+    const contentType =
+      upstreamResponse.headers.get("content-type") || "application/json";
+    const body = await upstreamResponse.arrayBuffer();
+    const bodyText = new TextDecoder().decode(body);
+    
+    console.log("OTP Verify - Backend response status:", upstreamResponse.status);
+    console.log("OTP Verify - Backend response body:", bodyText);
+
+    return new NextResponse(body, {
+      status: upstreamResponse.status,
+      headers: { "content-type": contentType },
+    });
+  } catch (error: any) {
+    console.error("Failed to reach backend (OTP verify):", error);
+    return NextResponse.json(
+      {
+        error: "Backend unreachable",
+        details: "Unable to verify OTP. Please try again later.",
+      },
+      { status: 502 },
     );
   }
 };

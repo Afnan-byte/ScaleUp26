@@ -18,6 +18,9 @@ export default function Home() {
 
     const timer = setTimeout(() => {
       setOpen(true);
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("whatsapp-modal-opened"));
+      }
       hasShown.current = true; 
     }, 6000);
 

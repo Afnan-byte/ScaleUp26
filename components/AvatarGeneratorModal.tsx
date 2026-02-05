@@ -104,28 +104,33 @@ function TypeCard({
           : "bg-white text-[#5E5E5E] border-[#E5E5E5] hover:border-gray-300 lg:hover:shadow-md",
       )}
     >
-      <Icon 
+      <Icon
         className={cn(
           "w-4 h-4 mb-1",
           "lg:absolute lg:top-4 lg:w-6 lg:h-6 lg:mb-0",
-          active ? "brightness-0 invert" : "opacity-40"
-        )} 
+          active ? "brightness-0 invert" : "opacity-40",
+        )}
       />
       <div
         className={cn(
           "text-[9px] font-bold",
           "lg:text-base lg:font-normal lg:mt-8 lg:mb-2",
         )}
-        style={{ fontFamily: window.innerWidth >= 1024 ? 'Cal Sans, sans-serif' : 'Geist, sans-serif' }}
+        style={{
+          fontFamily:
+            window.innerWidth >= 1024
+              ? "Cal Sans, sans-serif"
+              : "Geist, sans-serif",
+        }}
       >
         {title}
       </div>
       <div
         className={cn(
           "hidden lg:block text-xs px-2",
-          active ? "opacity-100" : "opacity-60"
+          active ? "opacity-100" : "opacity-60",
         )}
-        style={{ fontFamily: 'Cal Sans, sans-serif' }}
+        style={{ fontFamily: "Cal Sans, sans-serif" }}
       >
         {subtitle}
       </div>
@@ -139,13 +144,14 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
   registrationData,
 }) => {
   const [previewType, setPreviewType] = useState<GenerationType>("superhero");
-  const [generationType, setGenerationType] = useState<GenerationType>("superhero");
+  const [generationType, setGenerationType] =
+    useState<GenerationType>("superhero");
   const [isGenerating, setIsGenerating] = useState(false);
   const [isGenerated, setIsGenerated] = useState(false);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
-   const [generatedImageUrl, setGeneratedImageUrl] = useState<string>("");
-   const [generatedUserId, setGeneratedUserId] = useState<string>("");
-  
+  const [generatedImageUrl, setGeneratedImageUrl] = useState<string>("");
+  const [generatedUserId, setGeneratedUserId] = useState<string>("");
+
   // Form data with initial values from registration
   const [formData, setFormData] = useState({
     name: registrationData?.name || "",
@@ -184,7 +190,9 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
 
     const interval = setInterval(() => {
       setPreviewType((prev) => {
-        const currentIndex = generationOptions.findIndex((opt) => opt.id === prev);
+        const currentIndex = generationOptions.findIndex(
+          (opt) => opt.id === prev,
+        );
         const nextIndex = (currentIndex + 1) % generationOptions.length;
         return generationOptions[nextIndex].id;
       });
@@ -192,6 +200,20 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
 
     return () => clearInterval(interval);
   }, [isOpen, isGenerated]);
+
+  useEffect(() => {
+    if (!generatedImageUrl || !formData.phone_no) return;
+    if (typeof window === "undefined") return;
+
+    try {
+      localStorage.setItem(
+        `scaleup2026:final_image_url:${formData.phone_no}`,
+        generatedImageUrl,
+      );
+    } catch (error) {
+      console.error("Failed to store generated image URL:", error);
+    }
+  }, [generatedImageUrl, formData.phone_no]);
 
   // Map generationType to prompt_type
   const getPromptType = (type: GenerationType): string => {
@@ -226,7 +248,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
   };
 
   const handleFormChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -270,7 +292,14 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
       return;
     }
 
-    if (!formData.name || !formData.email || !formData.phone_no || !formData.district || !formData.category || !formData.organization) {
+    if (
+      !formData.name ||
+      !formData.email ||
+      !formData.phone_no ||
+      !formData.district ||
+      !formData.category ||
+      !formData.organization
+    ) {
       alert("Please fill all required fields");
       return;
     }
@@ -284,36 +313,42 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
       for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
         try {
           const response = await fetch(`/scaleup2026/user/${userId}`);
-          
+
           let result;
           try {
             const text = await response.text();
             console.log(`Polling attempt ${attempt + 1} raw response:`, text);
             result = text ? JSON.parse(text) : {};
           } catch (parseError) {
-            console.error(`Polling attempt ${attempt + 1} - Failed to parse JSON:`, parseError);
+            console.error(
+              `Polling attempt ${attempt + 1} - Failed to parse JSON:`,
+              parseError,
+            );
             continue; // Skip to next attempt
           }
-          
-          console.log(`Polling attempt ${attempt + 1}:`, { 
-            status: response.status, 
+
+          console.log(`Polling attempt ${attempt + 1}:`, {
+            status: response.status,
             result,
             hasFinalImageUrl: !!result.final_image_url,
             finalImageUrlValue: result.final_image_url,
-            allKeys: Object.keys(result)
+            allKeys: Object.keys(result),
           });
 
           if (response.ok && result.final_image_url) {
             console.log("Image URL found:", result.final_image_url);
             return result.final_image_url as string;
           }
-          
+
           // Check alternative field names
           if (response.ok && result.generated_image_url) {
-            console.log("Image URL found (generated_image_url):", result.generated_image_url);
+            console.log(
+              "Image URL found (generated_image_url):",
+              result.generated_image_url,
+            );
             return result.generated_image_url as string;
           }
-          
+
           if (response.ok && result.image_url) {
             console.log("Image URL found (image_url):", result.image_url);
             return result.image_url as string;
@@ -358,8 +393,11 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
         setIsGenerating(false);
         return;
       }
-      
-      console.log("Generate API Response:", { status: response.status, data: result });
+
+      console.log("Generate API Response:", {
+        status: response.status,
+        data: result,
+      });
 
       // Always store user_id when available
       if (result?.user_id) {
@@ -370,7 +408,9 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
 
       // Handle 202 Accepted (async processing) - immediately start polling
       if (response.status === 202 && result?.user_id) {
-        console.log("Backend is processing asynchronously (202), starting to poll...");
+        console.log(
+          "Backend is processing asynchronously (202), starting to poll...",
+        );
         const imageUrl = await fetchGeneratedImageUrl(result.user_id);
         if (imageUrl) {
           setGeneratedImageUrl(imageUrl);
@@ -388,7 +428,9 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
       if (!response.ok) {
         // Even with error, try to get image if user_id exists
         if (result?.user_id) {
-          console.log("Response not OK but user_id exists, polling for image...");
+          console.log(
+            "Response not OK but user_id exists, polling for image...",
+          );
           setGeneratedUserId(result.user_id);
           const imageUrl = await fetchGeneratedImageUrl(result.user_id);
           if (imageUrl) {
@@ -399,16 +441,17 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
           }
         }
 
-        const errorMsg = result?.details || result?.error || "Failed to generate avatar";
+        const errorMsg =
+          result?.details || result?.error || "Failed to generate avatar";
         console.error("Generate API Error:", errorMsg);
-        
+
         // For 504 timeout, suggest retry
         if (response.status === 504) {
           alert(`${errorMsg}. Please wait a moment and try again.`);
         } else {
           alert(`Error: ${errorMsg}`);
         }
-        
+
         setIsGenerating(false);
         return;
       }
@@ -431,15 +474,22 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
           setGeneratedImageUrl(imageUrl);
           setIsGenerated(true);
         } else {
-          alert("Image generation is taking longer than expected. Please try again.");
+          alert(
+            "Image generation is taking longer than expected. Please try again.",
+          );
         }
         setIsGenerating(false);
         return;
       }
 
       // If we get here, success response but no useful data
-      console.error("Success response but missing image URL and user_id:", result);
-      alert("Image generation completed but image URL is missing. Please contact support.");
+      console.error(
+        "Success response but missing image URL and user_id:",
+        result,
+      );
+      alert(
+        "Image generation completed but image URL is missing. Please contact support.",
+      );
       setIsGenerating(false);
     } catch (error) {
       console.error("Error generating avatar:", error);
@@ -532,7 +582,9 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
                   <div
                     className={cn(
                       "grid items-start gap-8 transition-all duration-500",
-                      isGenerated ? "lg:grid-cols-1" : "lg:grid-cols-[220px_1fr_500px]",
+                      isGenerated
+                        ? "lg:grid-cols-1"
+                        : "lg:grid-cols-[220px_1fr_500px]",
                     )}
                   >
                     {/* Left Sidebar - Options */}
@@ -572,7 +624,9 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
                           data-testid="img-poster-preview"
                           className={cn(
                             "relative mx-auto aspect-[3/4] w-full overflow-hidden rounded-3xl border border-zinc-200 bg-zinc-50 lg:aspect-auto lg:border-0",
-                            isGenerated ? "lg:h-[70vh] lg:max-h-[70vh] lg:w-auto" : "lg:h-auto",
+                            isGenerated
+                              ? "lg:h-[70vh] lg:max-h-[70vh] lg:w-auto"
+                              : "lg:h-auto",
                           )}
                         >
                           <AnimatePresence mode="wait">
@@ -582,13 +636,29 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
                               animate={{ opacity: 1, scale: 1 }}
                               exit={{ opacity: 0, scale: 1.05 }}
                               transition={{ duration: 0.4 }}
-                              src={isGenerated ? generatedImageUrl : activeOption.previewImg}
+                              src={
+                                isGenerated
+                                  ? generatedImageUrl
+                                  : activeOption.previewImg
+                              }
                               alt="Avatar preview"
-                              className="h-full w-full object-cover lg:object-contain"                              onError={(e) => {
-                                console.error("Image failed to load:", generatedImageUrl);
+                              className="h-full w-full object-cover lg:object-contain"
+                              onError={(e) => {
+                                console.error(
+                                  "Image failed to load:",
+                                  generatedImageUrl,
+                                );
                                 e.currentTarget.src = activeOption.previewImg;
                               }}
-                              onLoad={() => console.log("Image loaded successfully:", isGenerated ? generatedImageUrl : activeOption.previewImg)}                            />
+                              onLoad={() =>
+                                console.log(
+                                  "Image loaded successfully:",
+                                  isGenerated
+                                    ? generatedImageUrl
+                                    : activeOption.previewImg,
+                                )
+                              }
+                            />
                           </AnimatePresence>
 
                           {/* AI Loading Overlay */}
@@ -606,7 +676,11 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
                                     scale: [1, 1.1, 1],
                                   }}
                                   transition={{
-                                    rotate: { duration: 2, repeat: Infinity, ease: "linear" },
+                                    rotate: {
+                                      duration: 2,
+                                      repeat: Infinity,
+                                      ease: "linear",
+                                    },
                                     scale: { duration: 2, repeat: Infinity },
                                   }}
                                 >
@@ -665,9 +739,9 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
                               data-testid="text-description"
                               className="mt-3 max-w-prose text-sm leading-relaxed text-zinc-500 sm:text-base"
                             >
-                              To generate your avatar, upload a clear, well-lit, front-facing photo
-                              without filters. We only do one generation, and it can take about a
-                              minute.
+                              To generate your avatar, upload a clear, well-lit,
+                              front-facing photo without filters. We only do one
+                              generation, and it can take about a minute.
                             </p>
 
                             <div className="mt-7 grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -687,7 +761,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
                                   value={formData.name}
                                   onChange={handleFormChange}
                                   className="mt-2 h-[66px] w-full rounded-[16.5px] border border-[#E5E5E5] bg-white px-[16.5px] text-[20.625px] font-semibold tracking-[-0.04em] text-zinc-900 outline-none transition focus:ring-2 focus:ring-black placeholder:text-[#A1A1A1]"
-                                  style={{ fontFamily: 'Geist, sans-serif' }}
+                                  style={{ fontFamily: "Geist, sans-serif" }}
                                 />
                               </div>
                               <div>
@@ -696,7 +770,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
                                   className="text-sm font-semibold text-zinc-800"
                                   htmlFor="organization"
                                 >
-                                  Organization
+                                  Organization Name
                                 </label>
                                 <input
                                   id="organization"
@@ -706,7 +780,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
                                   value={formData.organization}
                                   onChange={handleFormChange}
                                   className="mt-2 h-[66px] w-full rounded-[16.5px] border border-[#E5E5E5] bg-white px-[16.5px] text-[20.625px] font-semibold tracking-[-0.04em] text-zinc-900 outline-none transition focus:ring-2 focus:ring-black placeholder:text-[#A1A1A1]"
-                                  style={{ fontFamily: 'Geist, sans-serif' }}
+                                  style={{ fontFamily: "Geist, sans-serif" }}
                                 />
                               </div>
                             </div>
@@ -754,7 +828,8 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
                                   data-testid="label-upload"
                                   className="text-sm font-semibold text-zinc-800"
                                 >
-                                  Upload image <span className="text-red-500">*</span>
+                                  Upload image{" "}
+                                  <span className="text-red-500">*</span>
                                 </div>
                                 <input
                                   type="file"
@@ -768,7 +843,8 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
                                   data-testid="text-upload-hint"
                                   className="mt-2 text-xs text-zinc-500"
                                 >
-                                  Upload a clear, well-lit photo (JPEG or PNG). Max size: 2MB
+                                  Upload a clear, well-lit photo (JPEG or PNG).
+                                  Max size: 2MB
                                 </div>
                               </div>
                             </div>

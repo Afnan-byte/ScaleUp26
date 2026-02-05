@@ -3,11 +3,21 @@
 
 import Marquee from 'react-fast-marquee';
 import { ChevronRight } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Registration from './Registration';
 
 export default function DepositMarquee() {
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
+
+  useEffect(() => {
+    const handler = () => setIsRegisterModalOpen(true);
+    window.addEventListener('open-registration-modal', handler as EventListener);
+    return () =>
+      window.removeEventListener(
+        'open-registration-modal',
+        handler as EventListener,
+      );
+  }, []);
 
   return (
     <div className='px-2 md:px-0 py-5'>
