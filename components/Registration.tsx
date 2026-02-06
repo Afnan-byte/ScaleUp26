@@ -301,7 +301,7 @@ export default function RegistrationModal({
 
       try {
         const registerResponse = await fetch(
-          "/scaleup2026/register",
+          "https://conclave2026.vercel.app/scaleup2026/register",
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
