@@ -45,7 +45,6 @@ interface AiModalPopProps {
 }
 
 export function AiModalPop({ showFloatingIcon = true }: AiModalPopProps) {
-  const [showInitialModal, setShowInitialModal] = useState(false);
   const [showPhoneModal, setShowPhoneModal] = useState(false);
   const [showExistingImageModal, setShowExistingImageModal] = useState(false);
   const [existingImageUrl, setExistingImageUrl] = useState("");
@@ -62,35 +61,6 @@ export function AiModalPop({ showFloatingIcon = true }: AiModalPopProps) {
   const [loading, setLoading] = useState(false);
   const [shouldOpenAvatarAfterOtp, setShouldOpenAvatarAfterOtp] =
     useState(false);
-
-  // Show initial modal 1 minute after WhatsApp popup
-  useEffect(() => {
-    let timer: ReturnType<typeof setTimeout> | null = null;
-
-    const handleWhatsappOpened = () => {
-      if (timer) return;
-      timer = setTimeout(() => {
-        setShowInitialModal(true);
-      }, 60000); // 1 minute after WhatsApp popup
-    };
-
-    if (typeof window !== "undefined") {
-      window.addEventListener(
-        "whatsapp-modal-opened",
-        handleWhatsappOpened as EventListener,
-      );
-    }
-
-    return () => {
-      if (timer) clearTimeout(timer);
-      if (typeof window !== "undefined") {
-        window.removeEventListener(
-          "whatsapp-modal-opened",
-          handleWhatsappOpened as EventListener,
-        );
-      }
-    };
-  }, []);
 
   // Timer for OTP resend
   useEffect(() => {
@@ -130,7 +100,6 @@ export function AiModalPop({ showFloatingIcon = true }: AiModalPopProps) {
     setExistingImageUrl(url);
     setShowExistingImageModal(true);
     setShowPhoneModal(false);
-    setShowInitialModal(false);
   };
 
   const handleSendOtp = async () => {
@@ -293,7 +262,6 @@ export function AiModalPop({ showFloatingIcon = true }: AiModalPopProps) {
 
   const handleOpenAvatarGenerator = () => {
     setShowPhoneModal(false);
-    setShowInitialModal(false);
     setAvatarRegistrationData({
       name: "",
       email: "",
@@ -367,47 +335,6 @@ export function AiModalPop({ showFloatingIcon = true }: AiModalPopProps) {
   return (
     <>
       <Toaster position="top-center" reverseOrder={false} />
-      {/* Initial AI Modal - appears after 2 minutes */}
-      <Dialog open={showInitialModal} onOpenChange={setShowInitialModal}>
-        <DialogContent
-          className="fixed w-full max-w-md rounded-xl p-6"
-          style={{
-            backgroundColor: "#fff",
-            color: "var(--neutral-50)",
-          }}
-        >
-          <DialogClose asChild />
-          <DialogHeader className="flex flex-col items-center text-center space-y-2">
-            <div className="p-2 md:p-3 rounded-full bg-purple-500 text-white">
-              <img src="/AI.svg" alt="AI" className="h-5 w-5 md:h-7 md:w-7" />
-            </div>
-
-            <DialogTitle className="text-lg font-[700]">
-              AI Image Generation
-            </DialogTitle>
-
-            <p className="text-sm text-gray-600">
-              Create stunning AI-generated avatars instantly! Generate a unique
-              avatar that represents you perfectly.
-            </p>
-          </DialogHeader>
-
-          <div className="flex gap-3 mt-6">
-            <button
-              onClick={() => setShowInitialModal(false)}
-              className="flex-1 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 transition"
-            >
-              Later
-            </button>
-            <button
-              onClick={openPhoneModal}
-              className="flex-1 px-4 py-2 rounded-lg bg-purple-600 text-white font-medium hover:bg-purple-700 transition"
-            >
-              Generate Now
-            </button>
-          </div>
-        </DialogContent>
-      </Dialog>
 
       {/* Phone & OTP Modal */}
       <Dialog open={showPhoneModal} onOpenChange={handleClosePhoneModal}>
@@ -609,14 +536,15 @@ export function AiModalPop({ showFloatingIcon = true }: AiModalPopProps) {
         registrationData={avatarRegistrationData || undefined}
       />
 
-      {/* Floating Icon - Bottom Right */}
+      {/* Floating Icon - Bottom Right - Sticky and Larger */}
       {showFloatingIcon && (
         <button
           onClick={openPhoneModal}
-          className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-purple-600 text-white shadow-lg hover:bg-purple-700 transition flex items-center justify-center hover:scale-110 transform duration-200"
-          title="AI Image Generation"
+          className="fixed bottom-8 right-8 z-50 w-20 h-20 rounded-full bg-gradient-to-br from-purple-600 to-purple-700 text-white shadow-2xl hover:shadow-purple-500/50 hover:from-purple-700 hover:to-purple-800 transition-all flex items-center justify-center hover:scale-110 transform duration-300 animate-bounce"
+          style={{ position: 'fixed' }}
+          title="Generate AI Avatar"
         >
-          <img src="/AI.svg" alt="AI" className="h-7 w-7" />
+          <img src="/AI.svg" alt="AI" className="h-10 w-10" />
         </button>
       )}
     </>
