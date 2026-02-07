@@ -697,6 +697,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
     if (!imageUrl) return;
 
     try {
+      window.open(imageUrl, "_blank", "noopener,noreferrer");
       const response = await fetch(imageUrl);
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);

@@ -323,15 +323,6 @@ export function AiModalPop({ showFloatingIcon = true }: AiModalPopProps) {
           return;
         }
 
-        // Check if there's already a generated image URL in localStorage
-        const storedUrl = getStoredImageUrl(combined);
-        if (storedUrl) {
-          console.log("Found existing image in localStorage:", storedUrl);
-          handleShowExistingImage(storedUrl);
-          setLoading(false);
-          return;
-        }
-
         toast.success("Phone number verified successfully!");
         if (shouldOpenAvatarAfterOtp) {
           handleOpenAvatarGenerator();
@@ -420,6 +411,7 @@ export function AiModalPop({ showFloatingIcon = true }: AiModalPopProps) {
     if (!existingImageUrl) return;
 
     try {
+      window.open(existingImageUrl, "_blank", "noopener,noreferrer");
       const response = await fetch(existingImageUrl);
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
