@@ -22,7 +22,7 @@ const getBaseUrl = () => {
     return baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
   }
 
-  return "http://13.127.247.90";
+  return "https://scaleup.frameforge.one";
 };
 
 export const handleGenerateProxy = async (request: NextRequest) => {

@@ -42,6 +42,7 @@ interface TicketTypeModalProps {
 
   handleRegister: () => void;
   loading: boolean;
+  registerStatus: "idle" | "submitting" | "submitted";
 }
 
 export default function RegistrationModal({
@@ -67,6 +68,9 @@ export default function RegistrationModal({
   const [modalWidth, setModalWidth] = useState("50%");
   const [ticketID, setTicketID] = useState("");
   const [loading, setLoading] = useState(false);
+  const [registerStatus, setRegisterStatus] = useState<
+    "idle" | "submitting" | "submitted"
+  >("idle");
   const [selectedTicket, setSelectedTicket] = useState<TicketType | null>(null);
   const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
 
@@ -84,15 +88,26 @@ export default function RegistrationModal({
     if (isOpen) {
       // Disable background scroll when modal is open
       document.body.style.overflow = "hidden";
+      window.dispatchEvent(new CustomEvent("registration-modal-opened"));
     } else {
       // Re-enable scroll when modal closes
       document.body.style.overflow = "";
+      window.dispatchEvent(new CustomEvent("registration-modal-closed"));
+      setRegisterStatus("idle");
     }
     // Cleanup when component unmounts
     return () => {
       document.body.style.overflow = "";
     };
   }, [isOpen]);
+
+  useEffect(() => {
+    if (isAvatarModalOpen) {
+      window.dispatchEvent(new CustomEvent("avatar-modal-opened"));
+    } else {
+      window.dispatchEvent(new CustomEvent("avatar-modal-closed"));
+    }
+  }, [isAvatarModalOpen]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
@@ -196,6 +211,7 @@ export default function RegistrationModal({
   //sadasivan's code started here.
   const handleRegister = async () => {
     setLoading(true);
+    setRegisterStatus("submitting");
 
     try {
       // ✅ Front-end validation
@@ -209,6 +225,7 @@ export default function RegistrationModal({
       ) {
         toast.error("Please fill all required fields");
         setLoading(false);
+        setRegisterStatus("idle");
         return;
       }
 
@@ -276,6 +293,7 @@ export default function RegistrationModal({
         const key = Object.keys(result.message)[0];
         toast.error(result.message[key][0]);
         setLoading(false);
+        setRegisterStatus("idle");
         return;
       }
 
@@ -284,6 +302,7 @@ export default function RegistrationModal({
         console.log(" Opening Razorpay");
         payWithRazorpay(result.response);
         setLoading(false);
+        setRegisterStatus("idle");
         return;
       }
 
@@ -316,25 +335,31 @@ export default function RegistrationModal({
           console.error("Register API error:", registerResult);
           toast.error("Registration to backend failed. Please try again.");
           setLoading(false);
+          setRegisterStatus("idle");
           return;
         }
       } catch (registerError) {
         console.error("Register API call error:", registerError);
         toast.error("Failed to complete registration. Please try again.");
         setLoading(false);
+        setRegisterStatus("idle");
         return;
       }
 
-      // SUCCESS - Show success and open avatar modal with registration data
+      // SUCCESS - Show success first, then open avatar modal
       toast.success("Registration successful ");
       setTicketID(
         result.response?.event_register_id || "TEST-TICKET-" + Date.now(),
       );
+      setRegisterStatus("submitted");
       setStep("success");
-      setIsAvatarModalOpen(true);
+      setTimeout(() => {
+        setIsAvatarModalOpen(true);
+      }, 800);
     } catch (error) {
       toast.error("Something went wrong");
       console.error(error);
+      setRegisterStatus("idle");
     } finally {
       setLoading(false);
     }
@@ -356,8 +381,7 @@ export default function RegistrationModal({
   return (
     <>
       {/* Overlay */}
-
-      <div className="fixed inset-0 z-50 backdrop-blur-sm z-999">
+      <div className="fixed inset-0 z-50 backdrop-blur-sm">
         {/* Right Side Modal Container */}
         <div
           className="absolute top-1/2 md:top-1/2 lg:top-1/2 right-0 transform -translate-y-1/2 
@@ -391,6 +415,7 @@ export default function RegistrationModal({
               selectedTicket={selectedTicket}
               setSelectedTicket={setSelectedTicket}
               loading={loading}
+              registerStatus={registerStatus}
             />
           )}
 
@@ -405,7 +430,6 @@ export default function RegistrationModal({
           {step === "success" && (
             <SuccessModal
               onClose={() => {
-                onClose();
                 setIsAvatarModalOpen(true);
               }}
               setStep={setStep}
@@ -691,6 +715,7 @@ const TicketTypeModal: React.FC<TicketTypeModalProps> = ({
   handleRegister,
   setSelectedTicket,
   loading,
+  registerStatus,
 }) => {
   const handleSelect = (type: "general" | "vip") => setSelectedTicket(type);
 
@@ -819,9 +844,13 @@ const TicketTypeModal: React.FC<TicketTypeModalProps> = ({
         <button
           onClick={handleRegister}
           className="px-8 py-3 bg-[#418CFF] text-white font-medium rounded-full hover:bg-blue-600 transition"
-          disabled={loading}
+          disabled={loading || registerStatus === "submitted"}
         >
-          Register
+          {loading
+            ? "Submitting..."
+            : registerStatus === "submitted"
+              ? "Submitted"
+              : "Register"}
         </button>
       </div>
     </div>

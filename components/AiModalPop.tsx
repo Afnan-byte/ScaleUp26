@@ -49,6 +49,7 @@ export function AiModalPop({ showFloatingIcon = true }: AiModalPopProps) {
   const [showExistingImageModal, setShowExistingImageModal] = useState(false);
   const [existingImageUrl, setExistingImageUrl] = useState("");
   const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
+  const [isExternalModalOpen, setIsExternalModalOpen] = useState(false);
   const [avatarRegistrationData, setAvatarRegistrationData] =
     useState<AvatarRegistrationData | null>(null);
   const [countryCode, setCountryCode] = useState("+91"); // Country dial code
@@ -72,6 +73,58 @@ export function AiModalPop({ showFloatingIcon = true }: AiModalPopProps) {
 
     return () => clearInterval(interval);
   }, [otpSent, timeLeft]);
+
+  useEffect(() => {
+    const handleRegistrationOpen = () => setIsExternalModalOpen(true);
+    const handleRegistrationClose = () => setIsExternalModalOpen(false);
+    const handleAvatarOpen = () => setIsExternalModalOpen(true);
+    const handleAvatarClose = () => setIsExternalModalOpen(false);
+    const handleRegistrationTrigger = () => setIsExternalModalOpen(true);
+
+    window.addEventListener(
+      "registration-modal-opened",
+      handleRegistrationOpen as EventListener,
+    );
+    window.addEventListener(
+      "open-registration-modal",
+      handleRegistrationTrigger as EventListener,
+    );
+    window.addEventListener(
+      "registration-modal-closed",
+      handleRegistrationClose as EventListener,
+    );
+    window.addEventListener(
+      "avatar-modal-opened",
+      handleAvatarOpen as EventListener,
+    );
+    window.addEventListener(
+      "avatar-modal-closed",
+      handleAvatarClose as EventListener,
+    );
+
+    return () => {
+      window.removeEventListener(
+        "registration-modal-opened",
+        handleRegistrationOpen as EventListener,
+      );
+      window.removeEventListener(
+        "open-registration-modal",
+        handleRegistrationTrigger as EventListener,
+      );
+      window.removeEventListener(
+        "registration-modal-closed",
+        handleRegistrationClose as EventListener,
+      );
+      window.removeEventListener(
+        "avatar-modal-opened",
+        handleAvatarOpen as EventListener,
+      );
+      window.removeEventListener(
+        "avatar-modal-closed",
+        handleAvatarClose as EventListener,
+      );
+    };
+  }, []);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -196,14 +249,17 @@ export function AiModalPop({ showFloatingIcon = true }: AiModalPopProps) {
       const combined = countryCode + phone;
       console.log("Verifying OTP for:", combined, "OTP:", otp);
 
-      const response = await fetch("http://13.127.247.90/scaleup2026/otp/verify", {
+      const response = await fetch(
+        "https://scaleup.frameforge.one/scaleup2026/otp/verify",
+        {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           phoneNumber: combined,
           otp,
         }),
-      });
+        },
+      );
 
       console.log("OTP Verify Response Status:", response.status);
       const responseData = await response.json().catch(() => ({}));
@@ -537,7 +593,11 @@ export function AiModalPop({ showFloatingIcon = true }: AiModalPopProps) {
       />
 
       {/* Floating Icon - Bottom Right - Sticky and Larger */}
-      {showFloatingIcon && (
+      {showFloatingIcon &&
+        !showPhoneModal &&
+        !showExistingImageModal &&
+        !isAvatarModalOpen &&
+        !isExternalModalOpen && (
         <button
           onClick={openPhoneModal}
           className="fixed bottom-8 right-8 z-50 w-40 h-40 rounded-full transition-all flex items-center justify-center hover:scale-110 transform duration-300 animate-bounce"
