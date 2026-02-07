@@ -540,7 +540,9 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
             "Response not OK, polling for image by phone_no...",
             formData.phone_no,
           );
-          const imageUrl = await fetchGeneratedImageUrlByPhone(formData.phone_no);
+          const imageUrl = await fetchGeneratedImageUrlByPhone(
+            formData.phone_no,
+          );
           if (imageUrl) {
             setGeneratedImageUrl(imageUrl);
             setIsGenerated(true);
