@@ -63,6 +63,41 @@ export function AiModalPop({ showFloatingIcon = true }: AiModalPopProps) {
   const [shouldOpenAvatarAfterOtp, setShouldOpenAvatarAfterOtp] =
     useState(false);
 
+  const OTP_VERIFY_TTL_MS = 5 * 60 * 1000;
+
+  const getVerifiedAt = (phoneValue: string) => {
+    if (!phoneValue || typeof window === "undefined") return 0;
+    const raw = localStorage.getItem(
+      `scaleup2026:otp_verified_at:${phoneValue}`,
+    );
+    const parsed = raw ? Number(raw) : 0;
+    return Number.isFinite(parsed) ? parsed : 0;
+  };
+
+  const setVerifiedAt = (phoneValue: string) => {
+    if (!phoneValue || typeof window === "undefined") return;
+    localStorage.setItem(
+      `scaleup2026:otp_verified_at:${phoneValue}`,
+      Date.now().toString(),
+    );
+  };
+
+  const clearVerifiedAt = (phoneValue: string) => {
+    if (!phoneValue || typeof window === "undefined") return;
+    localStorage.removeItem(`scaleup2026:otp_verified_at:${phoneValue}`);
+  };
+
+  const isVerifiedRecently = (phoneValue: string) => {
+    const verifiedAt = getVerifiedAt(phoneValue);
+    if (!verifiedAt) return false;
+    const expired = Date.now() - verifiedAt > OTP_VERIFY_TTL_MS;
+    if (expired) {
+      clearVerifiedAt(phoneValue);
+      return false;
+    }
+    return true;
+  };
+
   // Timer for OTP resend
   useEffect(() => {
     if (!otpSent || timeLeft <= 0) return;
@@ -153,6 +188,10 @@ export function AiModalPop({ showFloatingIcon = true }: AiModalPopProps) {
     setExistingImageUrl(url);
     setShowExistingImageModal(true);
     setShowPhoneModal(false);
+    const combined = countryCode + phone;
+    if (combined) {
+      setVerifiedAt(combined);
+    }
   };
 
   const handleSendOtp = async () => {
@@ -226,9 +265,7 @@ export function AiModalPop({ showFloatingIcon = true }: AiModalPopProps) {
         setTimeLeft(600);
         toast.success("OTP sent to your phone number");
       } else {
-        toast.error(
-          `Failed to send OTP: ${responseData.error || "Please try again"}`,
-        );
+        toast.error(responseData.error || "OTP not able to send.");
       }
     } catch (error) {
       console.error("Error sending OTP:", error);
@@ -302,7 +339,7 @@ export function AiModalPop({ showFloatingIcon = true }: AiModalPopProps) {
           setShowPhoneModal(false);
         }
       } else {
-        toast.error(`Invalid OTP: ${responseData.error || "Please try again"}`);
+        toast.error(responseData.error || "Invalid OTP. Please try again.");
       }
     } catch (error) {
       console.error("Error verifying OTP:", error);
@@ -331,6 +368,17 @@ export function AiModalPop({ showFloatingIcon = true }: AiModalPopProps) {
   };
 
   const openPhoneModal = () => {
+    const combined = countryCode + phone;
+    if (combined && isVerifiedRecently(combined)) {
+      const storedUrl = getStoredImageUrl(combined);
+      if (storedUrl) {
+        handleShowExistingImage(storedUrl);
+        return;
+      }
+      handleOpenAvatarGenerator();
+      return;
+    }
+
     setShowPhoneModal(true);
   };
 
@@ -395,7 +443,7 @@ export function AiModalPop({ showFloatingIcon = true }: AiModalPopProps) {
       {/* Phone & OTP Modal */}
       <Dialog open={showPhoneModal} onOpenChange={handleClosePhoneModal}>
         <DialogContent
-          className="fixed w-full max-w-md rounded-xl p-6"
+          className="fixed w-[95vw] sm:w-full max-w-md rounded-xl p-6"
           style={{
             backgroundColor: "#fff",
             color: "var(--neutral-50)",
@@ -415,7 +463,7 @@ export function AiModalPop({ showFloatingIcon = true }: AiModalPopProps) {
                   <label className="text-sm font-medium text-gray-700">
                     Phone Number
                   </label>
-                  <div className="flex gap-2">
+                  <div className="flex flex-col sm:flex-row gap-2">
                     <Select
                       value={selectedCountry}
                       onValueChange={(code) => {
@@ -424,7 +472,7 @@ export function AiModalPop({ showFloatingIcon = true }: AiModalPopProps) {
                         setCountrySearch("");
                       }}
                     >
-                      <SelectTrigger className="w-40 h-10 border-2 border-purple-500 focus:ring-2 focus:ring-purple-600 text-gray-900 bg-white">
+                      <SelectTrigger className="w-full sm:w-40 h-10 border-2 border-purple-500 focus:ring-2 focus:ring-purple-600 text-gray-900 bg-white">
                         <SelectValue>
                           <span className="text-gray-900 font-medium">
                             {selectedCountry}
@@ -471,7 +519,7 @@ export function AiModalPop({ showFloatingIcon = true }: AiModalPopProps) {
                       placeholder="Enter phone number"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
-                      className="flex-1 px-3 py-2 border-2 border-purple-500 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-purple-600 outline-none h-10"
+                      className="w-full sm:flex-1 px-3 py-2 border-2 border-purple-500 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-purple-600 outline-none h-10"
                     />
                   </div>
                 </div>
@@ -502,7 +550,7 @@ export function AiModalPop({ showFloatingIcon = true }: AiModalPopProps) {
                       setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))
                     }
                     maxLength={6}
-                    className="w-full px-3 py-2 border-2 border-purple-500 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-purple-600 outline-none text-center text-2xl tracking-widest"
+                    className="w-full px-3 py-2 border-2 border-purple-500 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-purple-600 outline-none text-center text-xl sm:text-2xl tracking-widest"
                   />
                 </div>
 
