@@ -357,7 +357,7 @@ export default function RegistrationModal({
     <>
       {/* Overlay */}
 
-      <div className="fixed inset-0 z-50 backdrop-blur-sm">
+      <div className="fixed inset-0 z-50 backdrop-blur-sm z-999">
         {/* Right Side Modal Container */}
         <div
           className="absolute top-1/2 md:top-1/2 lg:top-1/2 right-0 transform -translate-y-1/2 
