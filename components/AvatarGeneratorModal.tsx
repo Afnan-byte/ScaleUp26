@@ -61,15 +61,22 @@ const generationOptions: {
   },
 ];
 
+const loadingForegroundImages = [
+  "/assets/images/1_eng.png",
+  "/assets/images/1_mal.png",
+  "/assets/images/2_eng.png",
+  "/assets/images/2_mal.png",
+  "/assets/images/3_eng.png",
+  "/assets/images/3_mal.png",
+];
+
+// ADD THIS ARRAY - This was missing in your code
 const loadingMessages = [
-  "It takes about 0.2 liters of water to cool the system for this generation",
-  "AI image generation uses approximately 20 megajoules of energy per image",
-  "AI models process millions of calculations per second to create your avatar",
-  "Your avatar is being crafted using advanced neural networks",
-  "Did you know? AI can recognize over 10,000 different facial features",
-  "We're analyzing lighting, shadows, and textures to perfect your image",
-  "Machine learning algorithms are working their magic on your photo",
-  "Creating the perfect blend of realism and artistic style",
+  "Creating your unique avatar...",
+  "Adding magical touches...",
+  "Transforming your image...",
+  "Almost there...",
+  "Finalizing your masterpiece...",
 ];
 
 const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
@@ -87,6 +94,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
   const [generatedUserId, setGeneratedUserId] = useState<string>("");
   const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
   const [countdown, setCountdown] = useState(90);
+  const [fgIndex, setFgIndex] = useState(0);
 
   const [formData, setFormData] = useState({
     name: registrationData?.name || "",
@@ -96,6 +104,16 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
     category: registrationData?.category || "",
     organization: registrationData?.organization || "",
   });
+
+  useEffect(() => {
+    if (!isGenerating) return;
+
+    const interval = setInterval(() => {
+      setFgIndex((prev) => (prev + 1) % loadingForegroundImages.length);
+    }, 10000); // 10 seconds
+
+    return () => clearInterval(interval);
+  }, [isGenerating]);
 
   useEffect(() => {
     if (registrationData) {
@@ -468,7 +486,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
                 {!isGenerated ? (
                   <motion.div key="form" initial={{ opacity: 1 }} exit={{ opacity: 0 }}>
                     <h1
-                      className="text-3xl lg:text-4xl font-bold text-gray-900 mb-2 "
+                      className="text-3xl lg:text-4xl font-normal text-gray-900 mb-2"
                       style={{ fontFamily: 'Calsans, sans-serif' }}
                     >
                       Generate your avatar
@@ -588,89 +606,109 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
             </div>
 
             {/* RIGHT SIDE - Image Preview */}
-            <div className="hidden lg:flex lg:w-1/2 bg-gray-900 items-center justify-center p-6 lg:p-8 relative">
-              {/* Type Selection Tabs - Top */}
-              {!isGenerated && (
-                <div className="absolute top-4 left-4 right-4 flex gap-2 bg-white/10 backdrop-blur-sm rounded-xl p-1">
-                  {generationOptions.map((opt) => (
-                    <button
-                      key={opt.id}
-                      onClick={() => setPreviewType(opt.id)}
-                      className={cn(
-                        "flex-1 px-3 py-2 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-1.5",
-                        previewType === opt.id ? "bg-white text-gray-900" : "text-white/70 hover:text-white"
-                      )}
-                    >
-                      <opt.icon className="w-3.5 h-3.5" />
-                      {opt.title}
-                    </button>
-                  ))}
-                </div>
-              )}
+            <div className="hidden lg:flex lg:w-1/2 bg-gray-900 p-6 lg:p-8 relative flex-col">
+  
+  {/* Type Selection Tabs - Header */}
+  {!isGenerated && (
+    <div className="mb-6">
+      <div className="flex gap-2 bg-white/10 backdrop-blur-sm rounded-xl p-1">
+        {generationOptions.map((opt) => (
+          <button
+            key={opt.id}
+            onClick={() => setPreviewType(opt.id)}
+            className={cn(
+              "flex-1 px-3 py-2 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-1.5",
+              previewType === opt.id
+                ? "bg-white text-gray-900"
+                : "text-white/70 hover:text-white"
+            )}
+          >
+            <opt.icon className="w-3.5 h-3.5" />
+            {opt.title}
+          </button>
+        ))}
+      </div>
+    </div>
+  )}
 
-              {/* Main Content */}
-              <div className="w-full h-full flex items-center justify-center mt-16 lg:mt-0">
-                <AnimatePresence mode="wait">
-                  {isGenerating ? (
-                    <motion.div
-                      key="loading"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      className="text-center text-white"
-                    >
-                      <motion.div
-                        animate={{ rotate: 360, scale: [1, 1.2, 1] }}
-                        transition={{
-                          rotate: { duration: 2, repeat: Infinity, ease: "linear" },
-                          scale: { duration: 2, repeat: Infinity },
-                        }}
-                        className="mb-6"
-                      >
-                        <Sparkles className="h-16 w-16 mx-auto" />
-                      </motion.div>
+  {/* Preview Area */}
+  <div className="flex-1 w-full h-full flex flex-col items-center justify-center pt-10 overflow-hidden">
+  <AnimatePresence mode="wait">
+    {isGenerating ? (
+      <motion.div
+        key="loading"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="relative w-full h-full rounded-2xl overflow-hidden flex items-center justify-center"
+      >
+        {/* Background Image */}
+        <div
+          className="absolute inset-0 bg-cover bg-center scale-105"
+          style={{
+            backgroundImage: "url('/assets/images/base.png')",
+          }}
+        />
+        <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+        
 
-                      <AnimatePresence mode="wait">
-                        <motion.p
-                          key={currentMessageIndex}
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -10 }}
-                          className="text-lg font-semibold mb-8 px-4"
-                        >
-                          {loadingMessages[currentMessageIndex]}
-                        </motion.p>
-                      </AnimatePresence>
+        {/* Foreground Fade Image */}
+        <AnimatePresence mode="wait">
+          <motion.img
+            key={fgIndex}
+            src={loadingForegroundImages[fgIndex]}
+            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 1.05 }}
+            transition={{ duration: 0.8 }}
+            className="relative z-10 max-h-[65%] max-w-[80%] object-contain rounded-xl shadow-2xl pt-56"
+          />
+        </AnimatePresence>
 
-                      <div className="text-5xl font-mono font-bold">{formattedCountdown}</div>
-                    </motion.div>
-                  ) : (
-                    <motion.div
-                      key={isGenerated ? "result" : previewType}
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.9 }}
-                      className="w-full max-w-md"
-                    >
-                      <img
-                        src={isGenerated ? generatedImageUrl : activeOption.previewImg}
-                        alt="Avatar preview"
-                        className="w-full h-auto rounded-2xl shadow-2xl"
-                        onError={(e) => {
-                          console.error("Image failed to load");
-                          e.currentTarget.src = activeOption.previewImg;
-                        }}
-                      />
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
+        {/* Countdown */}
+        <div className="absolute bottom-8 z-20 text-center text-white">
+          <div className="text-5xl font-mono font-bold tracking-wider drop-shadow-lg">
+            {formattedCountdown}
+          </div>
+          <p className="text-xs mt-2 text-white/70">
+            Generating your AI Avatar...
+          </p>
+        </div>
+      </motion.div>
+    ) : (
+      <motion.div
+        key={isGenerated ? "result" : previewType}
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        className="w-full h-full flex items-center justify-center px-6 pb-16"
+      >
+        <img
+          src={isGenerated ? generatedImageUrl : activeOption.previewImg}
+          alt="Avatar preview"
+          className="
+            max-h-[75vh]
+            max-w-full
+            object-contain
+            rounded-2xl
+            shadow-2xl
+          "
+          onError={(e) => {
+            e.currentTarget.src = activeOption.previewImg;
+          }}
+        />
+      </motion.div>
+    )}
+  </AnimatePresence>
 
-              {/* Bottom branding */}
-              <div className="absolute bottom-4 left-0 right-0 text-center text-white/60 text-xs">
-                Created using FrameForge.one
-              </div>
-            </div>
+  {/* Bottom branding */}
+  <div className="pt-4 text-center text-white/60 text-xs shrink-0">
+    Created using FrameForge.one
+  </div>
+</div>
+
+</div>
+
           </motion.div>
         </motion.div>
       )}

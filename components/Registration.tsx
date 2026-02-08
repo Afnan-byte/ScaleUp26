@@ -825,20 +825,30 @@ function SuccessRightSide({ ticketID }: { ticketID: string }) {
      
 
       {/* Main GIF/Animation Area */}
-      <div className="relative z-10 w-full max-w-md">
-        <img 
-          src="/assets/images/avatar.gif" 
-          alt="Success Animation"
-          className="w-full h-auto rounded-2xl shadow-2xl"
-          onError={(e) => {
-            // Fallback to static image if GIF doesn't exist
-            e.currentTarget.src = '/assets/images/reg3.png';
-          }}
-        />
-        
-        {/* Overlay Text */}
-        
-      </div>
+      <div className="relative z-10 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden">
+  
+  {/* Background image */}
+  <div
+    className="absolute inset-0 bg-cover bg-center scale-110"
+    style={{
+      backgroundImage: "url('/assets/images/base.png')",
+    }}
+  />
+
+  {/* Soft overlay */}
+  <div className="absolute inset-0 bg-black/30"></div>
+
+  {/* Foreground image */}
+  <img 
+    src="/assets/images/right.png" 
+    alt="Success Animation"
+    className="relative z-10 w-full h-auto rounded-2xl"
+    onError={(e) => {
+      e.currentTarget.src = "/assets/images/reg3.png";
+    }}
+  />
+</div>
+
 
       {/* Bottom Branding */}
       
