@@ -326,10 +326,25 @@ export default function RegistrationModal({
   return (
     <>
       {/* Overlay with backdrop blur */}
-      <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm">
+{/* Overlay with backdrop blur */}
+<div
+  className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm"
+  onClick={onClose}   // 👈 close when clicking outside
+>
         {/* Modal Container - Full screen on mobile, split on desktop */}
         <div className="fixed inset-0 flex items-center justify-center p-0 md:p-4">
-          <div className="relative w-full h-full md:h-auto md:max-h-[90vh] md:max-w-6xl md:rounded-2xl overflow-hidden bg-white shadow-2xl flex flex-col md:flex-row">
+  <div
+    className="relative w-full h-full md:h-auto md:max-h-[90vh] md:max-w-6xl md:rounded-2xl overflow-hidden bg-white shadow-2xl flex flex-col md:flex-row"
+    onClick={(e) => e.stopPropagation()}   // 👈 prevent outside click close
+  >
+    <button
+  onClick={onClose}
+  className="absolute top-4 right-4 z-50 text-gray-600 hover:text-red-600 transition"
+>
+  <X size={26} />
+</button>
+
+
             
             {/* LEFT SIDE - Forms */}
             <div className="w-full md:w-1/2 overflow-y-auto bg-white">
@@ -357,16 +372,17 @@ export default function RegistrationModal({
                 />
               )}
 
-              {step === "success" && (
-                <SuccessModal
-                  onClose={() => {
-                    onClose();
-                    setIsAvatarModalOpen(true);
-                  }}
-                  setStep={setStep}
-                  ticketID={ticketID}
-                />
-              )}
+              
+                {step === "success" && (
+  <SuccessModal
+    onClose={onClose}
+    setStep={setStep}
+    ticketID={ticketID}
+    onOpenAvatar={() => setIsAvatarModalOpen(true)}
+  />
+)}
+
+             
             </div>
 
             {/* RIGHT SIDE - Images/GIF */}
@@ -511,7 +527,7 @@ function RegistrationForm({
               name="countryCode"
               value={formData.countryCode}
               onChange={handleChange}
-              className="w-24 pl-3 pr-2 border rounded-lg text-gray-700 h-[45px] focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              className="appearance-none w-24 pl-3 pr-2 border rounded-lg text-gray-700 h-[45px] focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
               style={{ ...getBoxStyle("countryCode")}}
             >
               <option value="+91">+91</option>
@@ -861,11 +877,14 @@ function SuccessModal({
   onClose,
   setStep,
   ticketID,
+  onOpenAvatar,
 }: {
   onClose: () => void;
   setStep: React.Dispatch<React.SetStateAction<"form" | "ticket" | "success">>;
   ticketID: string;
+  onOpenAvatar: () => void;
 }) {
+
   const [guestData, setGuestData] = useState<any>(null);
   const [ticketImageUrl, setTicketImageUrl] = useState<string>("");
   const [loading, setLoading] = useState(true);
@@ -1027,14 +1046,17 @@ if (imageUrl) {
         )}
 
         {/* Next Step Button */}
-        <button
-          onClick={onClose}
-          disabled={loading}
-          className="w-full py-4 mb-10 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-          style={{ fontSize: '16px',  }}
-        >
-          {loading ? "Loading..." : "Next Step : Generate your AI Avatar"}
-        </button>
+       <button
+  onClick={() => {
+    onClose();          // close registration modal
+    onOpenAvatar();    // open avatar modal
+  }}
+  disabled={loading}
+  className="w-full py-4 mb-10 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+>
+  {loading ? "Loading..." : "Next Step : Generate your AI Avatar"}
+</button>
+
       </div>
     </div>
   );

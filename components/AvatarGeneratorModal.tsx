@@ -95,6 +95,18 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
   const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
   const [countdown, setCountdown] = useState(90);
   const [fgIndex, setFgIndex] = useState(0);
+  const [isMobile, setIsMobile] = useState(false);
+useEffect(() => {
+  const checkMobile = () => {
+    setIsMobile(window.innerWidth < 1024);
+  };
+
+  checkMobile(); // initial
+  window.addEventListener("resize", checkMobile);
+
+  return () => window.removeEventListener("resize", checkMobile);
+}, []);
+
 
   const [formData, setFormData] = useState({
     name: registrationData?.name || "",
@@ -473,16 +485,24 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
             className="relative w-full max-w-5xl max-h-[95vh] bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col lg:flex-row"
           >
             {/* Close Button */}
-            {/* <button
+            <button
               onClick={handleClose}
               className="absolute top-6 right-6 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition"
             >
               <X className="h-5 w-5 text-gray-900" />
-            </button> */}
+            </button>
 
             {/* LEFT SIDE - Form */}
-            <div className="w-full lg:w-1/2 p-6 sm:p-8 lg:p-12 overflow-y-auto bg-white">
-              <AnimatePresence mode="wait">
+
+{!(isGenerating && isMobile) && (
+
+  <div
+    className={cn(
+      "w-full lg:w-1/2 p-6 sm:p-8 lg:p-12 overflow-y-auto bg-white transition-all duration-300",
+      isGenerating && "pointer-events-none blur-sm lg:blur-0 lg:pointer-events-auto"
+    )}
+  >
+                          <AnimatePresence mode="wait">
                 {!isGenerated ? (
                   <motion.div key="form" initial={{ opacity: 1 }} exit={{ opacity: 0 }}>
                     <h1
@@ -604,35 +624,57 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
                 )}
               </AnimatePresence>
             </div>
+            
+)}
 
             {/* RIGHT SIDE - Image Preview */}
-            <div className="hidden lg:flex lg:w-1/2 bg-gray-900 p-6 lg:p-8 relative flex-col">
+<div
+  className={cn(
+    "bg-gray-900 relative flex-col",
+
+    // Desktop: always right panel
+    "hidden lg:flex lg:w-1/2 lg:p-6",
+
+    // Mobile overlay (only when generating / generated)
+    (isGenerating || isGenerated)
+      ? "fixed inset-0 z-[999] flex w-full h-full p-4 lg:static lg:z-auto"
+      : "hidden"
+  )}
+>
+
+
   
   {/* Type Selection Tabs - Header */}
-  {!isGenerated && (
-    <div className="mb-6">
-      <div className="flex gap-2 bg-white/10 backdrop-blur-sm rounded-xl p-1">
-        {generationOptions.map((opt) => (
-          <button
-            key={opt.id}
-            onClick={() => setPreviewType(opt.id)}
-            className={cn(
-              "flex-1 px-3 py-2 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-1.5",
-              previewType === opt.id
-                ? "bg-white text-gray-900"
-                : "text-white/70 hover:text-white"
-            )}
-          >
-            <opt.icon className="w-3.5 h-3.5" />
-            {opt.title}
-          </button>
-        ))}
-      </div>
+  {/* Type Selection Tabs - Header */}
+{!isGenerated && !isGenerating && (
+  <div className="mb-6">
+    <div className="flex gap-2 bg-white/10 backdrop-blur-sm rounded-xl p-1">
+      {generationOptions.map((opt) => (
+        <button
+          key={opt.id}
+          onClick={() => setPreviewType(opt.id)}
+          className={cn(
+            "flex-1 px-3 py-2 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-1.5",
+            previewType === opt.id
+              ? "bg-white text-gray-900"
+              : "text-white/70 hover:text-white"
+          )}
+        >
+          <opt.icon className="w-3.5 h-3.5" />
+          {opt.title}
+        </button>
+      ))}
     </div>
-  )}
+  </div>
+)}
 
   {/* Preview Area */}
-  <div className="relative w-full h-full rounded-2xl overflow-hidden">
+<div
+  className={cn(
+    "relative w-full h-full overflow-hidden",
+    "rounded-none lg:rounded-2xl"
+  )}
+>
   <AnimatePresence mode="wait">
     {isGenerating ? (
       <motion.div
@@ -640,7 +682,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="relative w-full h-full rounded-2xl overflow-hidden flex items-center justify-center"
+className="relative w-full h-full min-h-[70vh] rounded-2xl overflow-hidden flex items-center justify-center"
       >
         {/* Background Image */}
         <div
@@ -661,19 +703,22 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
     animate={{ opacity: 1, scale: 1 }}
     exit={{ opacity: 0, scale: 1.05 }}
     transition={{ duration: 0.6, ease: "easeOut" }}
-    className="
-      absolute
-      left-1/2
-      top-1/2
-      -translate-x-1/2
-      -translate-y-1/2
-      z-10
-      max-h-[80%]
-      max-w-[85%]
-      object-contain
-      rounded-2xl
-      shadow-2xl
-    "
+   className="
+  absolute
+  left-1/2
+  top-1/2
+  -translate-x-1/2
+  -translate-y-1/2
+  z-10
+  max-h-[85%]
+  max-w-[90%]
+  lg:max-h-[75%]
+  lg:max-w-[80%]
+  object-contain
+  rounded-2xl
+  shadow-2xl
+"
+
   />
 </AnimatePresence>
 
