@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import {
   Shield,
@@ -38,28 +38,28 @@ const generationOptions: {
   icon: any;
   previewImg: string;
 }[] = [
-  {
-    id: "superhero",
-    title: "Superhero",
-    subtitle: "Turns you into a superhero",
-    icon: Shield,
-    previewImg: "/superhero.png",
-  },
-  {
-    id: "professional",
-    title: "Professional",
-    subtitle: "A well curated professional shot",
-    icon: Briefcase,
-    previewImg: "/professional.png",
-  },
-  {
-    id: "medieval",
-    title: "Medieval Warrior",
-    subtitle: "An ancient fierce warrior",
-    icon: Sword,
-    previewImg: "/medieval.png",
-  },
-];
+    {
+      id: "superhero",
+      title: "Superhero",
+      subtitle: "Turns you into a superhero",
+      icon: Shield,
+      previewImg: "/superhero.png",
+    },
+    {
+      id: "professional",
+      title: "Professional",
+      subtitle: "A well curated professional shot",
+      icon: Briefcase,
+      previewImg: "/professional.png",
+    },
+    {
+      id: "medieval",
+      title: "Medieval Warrior",
+      subtitle: "An ancient fierce warrior",
+      icon: Sword,
+      previewImg: "/medieval.png",
+    },
+  ];
 
 const loadingForegroundImages = [
   "/assets/images/1_eng.png",
@@ -84,6 +84,8 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
   onClose,
   registrationData,
 }) => {
+  // ✅ Hook at top level (never move this)
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [previewType, setPreviewType] = useState<GenerationType>("superhero");
   const [generationType, setGenerationType] =
     useState<GenerationType>("superhero");
@@ -96,16 +98,16 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
   const [countdown, setCountdown] = useState(90);
   const [fgIndex, setFgIndex] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
-useEffect(() => {
-  const checkMobile = () => {
-    setIsMobile(window.innerWidth < 1024);
-  };
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 1024);
+    };
 
-  checkMobile(); // initial
-  window.addEventListener("resize", checkMobile);
+    checkMobile(); // initial
+    window.addEventListener("resize", checkMobile);
 
-  return () => window.removeEventListener("resize", checkMobile);
-}, []);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
 
   const [formData, setFormData] = useState({
@@ -466,6 +468,94 @@ useEffect(() => {
   };
 
   if (!isOpen) return null;
+  const handleOpenWithWarning = () => {
+    // Prevent multiple modals
+    if (document.getElementById("upload-warning-modal")) return;
+
+    const modalHTML = `
+      <div id="upload-warning-modal"
+        style="
+          position: fixed;
+          inset: 0;
+          background: rgba(0,0,0,0.5);
+          z-index: 9999;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 16px;
+        "
+      >
+        <div
+          style="
+            background: white;
+            padding: 24px;
+            width: 100%;
+            max-width: 400px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            font-family: sans-serif;
+          "
+        >
+          <h3 style="font-size: 18px; font-weight: 600; margin-bottom: 8px;">
+            Upload Warning
+          </h3>
+
+          <p style="font-size: 14px; color: #555; margin-bottom: 20px;">
+            Before you continue:
+This AI generation can be used only once. Make sure your photo is bright, clear, and shows your face fully. For best results, a professionally taken photo is recommended. A good photo = a great result 
+          </p>
+
+          <div style="display: flex; justify-content: flex-end; gap: 12px;">
+            <button
+              id="warning-cancel"
+              style="
+                padding: 8px 14px;
+                border-radius: 6px;
+                border: 1px solid #ccc;
+                background: #fff;
+                cursor: pointer;
+              "
+            >
+              Cancel
+            </button>
+
+            <button
+              id="warning-ok"
+              style="
+                padding: 8px 14px;
+                border-radius: 6px;
+                border: none;
+                background: #000;
+                color: #fff;
+                font-weight: 600;
+                cursor: pointer;
+              "
+            >
+              OK, Continue
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    document.body.insertAdjacentHTML("beforeend", modalHTML);
+
+    const modal = document.getElementById("upload-warning-modal");
+    const okBtn = document.getElementById("warning-ok");
+    const cancelBtn = document.getElementById("warning-cancel");
+
+    if (!modal || !okBtn || !cancelBtn) return;
+
+    okBtn.onclick = () => {
+      modal.remove();
+      fileInputRef.current?.click(); // ✅ safe
+    };
+
+    cancelBtn.onclick = () => {
+      modal.remove();
+    };
+  };
+
 
   return (
     <AnimatePresence>
@@ -482,7 +572,7 @@ useEffect(() => {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             onClick={(e) => e.stopPropagation()}
-            className="relative w-full max-w-5xl max-h-[95vh] bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col lg:flex-row"
+            className="relative w-full max-w-5xl max-h-[95vh] bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row"
           >
             {/* Close Button */}
             <button
@@ -494,216 +584,225 @@ useEffect(() => {
 
             {/* LEFT SIDE - Form */}
 
-{!(isGenerating && isMobile) && (
+            {!(isGenerating && isMobile) && (
 
-  <div
-    className={cn(
-      "w-full lg:w-1/2 p-6 sm:p-8 lg:p-12 overflow-y-auto bg-white transition-all duration-300",
-      isGenerating && "pointer-events-none blur-sm lg:blur-0 lg:pointer-events-auto"
-    )}
-  >
-                          <AnimatePresence mode="wait">
-                {!isGenerated ? (
-                  <motion.div key="form" initial={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                    <h1
-                      className="text-3xl lg:text-4xl font-normal text-gray-900 mb-2"
-                      style={{ fontFamily: 'Calsans, sans-serif' }}
-                    >
-                      Generate your avatar
-                    </h1>
-                    <p className="text-sm text-gray-500 mb-6">
-                      To generate your avatar, upload a clear, well-lit, front-facing photo without filters. We only do one generation, and it can take about a minute.
-                    </p>
-
-                    <div className="space-y-4">
-                      <div>
-                        <label className="block text-sm font-semibold text-gray-900 mb-1.5">
-                          Enter your name
-                        </label>
-                        <input
-                          name="name"
-                          value={formData.name}
-                          onChange={handleFormChange}
-                          placeholder="Enter your name"
-                          className="w-full h-11 px-4 rounded-lg border border-gray-300 bg-white text-gray-900 placeholder:text-gray-400 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-semibold text-gray-900 mb-1.5">
-                          Company Name
-                        </label>
-                        <input
-                          name="organization"
-                          value={formData.organization}
-                          onChange={handleFormChange}
-                          placeholder="Company Name"
-                          className="w-full h-11 px-4 rounded-lg border border-gray-300 bg-white text-gray-900 placeholder:text-gray-400 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-semibold text-gray-900 mb-1.5">
-                          Choose Type of generation
-                        </label>
-                        <div className="flex gap-2">
-                          {generationOptions.map((opt) => (
-                            <button
-                              key={opt.id}
-                              onClick={() => setGenerationType(opt.id)}
-                              className={cn(
-                                "flex-1 h-11 px-3 rounded-lg text-sm font-semibold transition border",
-                                generationType === opt.id
-                                  ? "bg-black text-white border-black"
-                                  : "bg-white text-gray-900 border-gray-300 hover:border-gray-400"
-                              )}
-                            >
-                              {opt.title === "Medieval Warrior" ? "Warrior" : opt.title}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-semibold text-gray-900 mb-1.5">
-                          Upload Photo
-                        </label>
-                        <div className="relative">
-                          <input
-                            type="file"
-                            id="file-upload"
-                            onChange={handleFileChange}
-                            accept="image/jpeg,image/png"
-                            className="hidden"
-                          />
-                          <label
-                            htmlFor="file-upload"
-                            className="flex items-center justify-between w-full h-11 px-4 rounded-lg border border-gray-300 cursor-pointer hover:border-gray-400 transition bg-white"
-                          >
-                            <span className="text-sm text-gray-500">
-                              {photoFile ? photoFile.name : "Select Image File"}
-                            </span>
-                            <button
-                              type="button"
-                              className="bg-black text-white px-4 py-1.5 rounded-md text-sm font-semibold"
-                            >
-                              Select File
-                            </button>
-                          </label>
-                        </div>
-                      </div>
-
-                      <button
-                        onClick={handleGenerate}
-                        disabled={isGenerating}
-                        className="w-full h-11 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed mt-2"
-                      >
-                        {isGenerating ? "Generating..." : "Submit"}
-                      </button>
-                    </div>
-                  </motion.div>
-                ) : (
-                  <motion.div key="success" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                    <h1
-                      className="text-3xl lg:text-4xl font-bold text-gray-900 mb-2 pt-2"
-                      style={{ fontFamily: 'Calsans, sans-serif' }}
-                    >
-                      Awesome your AI avatar has been generated
-                    </h1>
-                    <p className="text-sm text-gray-600 mb-6">
-                      Great news! Your AI Avatar has been sent to your email and WhatsApp. Feel free to share with your friends and on social networks.
-                    </p>
-                    <button
-                      onClick={handleDownload}
-                      className="w-full h-11 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition flex items-center justify-center gap-2"
-                    >
-                      <Download className="h-4 w-4" />
-                      Download AI Avatar
-                    </button>
-                  </motion.div>
+              <div
+                className={cn(
+                  "w-full lg:w-1/2 p-6 sm:p-8 lg:p-12 overflow-y-auto bg-white transition-all duration-300",
+                  isGenerating && "pointer-events-none blur-sm lg:blur-0 lg:pointer-events-auto"
                 )}
-              </AnimatePresence>
-            </div>
-            
-)}
+              >
+                <AnimatePresence mode="wait">
+                  {!isGenerated ? (
+                    <motion.div key="form" initial={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                      <h1
+                        className="text-3xl lg:text-4xl font-normal text-gray-900 mb-2"
+                        style={{ fontFamily: 'Calsans, sans-serif' }}
+                      >
+                        Generate your avatar
+                      </h1>
+                      <p className="text-sm text-gray-500 mb-6">
+                        To generate your avatar, upload a clear, well-lit, front-facing photo without filters. We only do one generation, and it can take about a minute.
+                      </p>
+
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-900 mb-1.5">
+                            Enter your name
+                          </label>
+                          <input
+                            name="name"
+                            value={formData.name}
+                            onChange={handleFormChange}
+                            placeholder="Enter your name"
+                            className="w-full h-11 px-4 rounded-lg border border-gray-300 bg-white text-gray-900 placeholder:text-gray-400 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-900 mb-1.5">
+                            Company Name
+                          </label>
+                          <input
+                            name="organization"
+                            value={formData.organization}
+                            onChange={handleFormChange}
+                            placeholder="Company Name"
+                            className="w-full h-11 px-4 rounded-lg border border-gray-300 bg-white text-gray-900 placeholder:text-gray-400 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-900 mb-1.5">
+                            Choose Type of generation
+                          </label>
+                          <div className="flex gap-2">
+                            {generationOptions.map((opt) => (
+                              <button
+                                key={opt.id}
+                                onClick={() => setGenerationType(opt.id)}
+                                className={cn(
+                                  "flex-1 h-11 px-3 rounded-lg text-sm font-semibold transition border",
+                                  generationType === opt.id
+                                    ? "bg-black text-white border-black"
+                                    : "bg-white text-gray-900 border-gray-300 hover:border-gray-400"
+                                )}
+                              >
+                                {opt.title === "Medieval Warrior" ? "Warrior" : opt.title}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-900 mb-1.5">
+                            Upload Photo
+                          </label>
+
+                          <div className="relative">
+                            <input
+                              ref={fileInputRef}
+                              type="file"
+                              accept="image/jpeg,image/png"
+                              onChange={handleFileChange}
+                              className="hidden"
+                            />
+
+                            <div
+                              onClick={handleOpenWithWarning}
+                              className="flex items-center justify-between w-full h-11 px-4 rounded-lg border border-gray-300 cursor-pointer hover:border-gray-400 transition bg-white"
+                            >
+                              <span className="text-sm text-gray-500">
+                                {photoFile
+                                  ? photoFile.name.length > 15
+                                    ? `${photoFile.name.slice(0, 35)}...`
+                                    : photoFile.name
+                                  : "Select Image File"}
+                              </span>
+
+
+                              <button
+                                type="button"
+                                className="bg-black text-white px-4 py-1.5 rounded-md text-sm font-semibold"
+                              >
+                                Select File
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+
+                        <button
+                          onClick={handleGenerate}
+                          disabled={isGenerating}
+                          className="w-full h-11 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed mt-2"
+                        >
+                          {isGenerating ? "Generating..." : "Submit"}
+                        </button>
+                      </div>
+                    </motion.div>
+                  ) : (
+                    <motion.div key="success" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                      <h1
+                        className="text-3xl lg:text-4xl font-bold text-gray-900 mb-2 pt-2"
+                        style={{ fontFamily: 'Calsans, sans-serif' }}
+                      >
+                        Awesome your AI avatar has been generated
+                      </h1>
+                      <p className="text-sm text-gray-600 mb-6">
+                        Great news! Your AI Avatar has been sent to your email and WhatsApp. Feel free to share with your friends and on social networks.
+                      </p>
+                      <button
+                        onClick={handleDownload}
+                        className="w-full h-11 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition flex items-center justify-center gap-2"
+                      >
+                        <Download className="h-4 w-4" />
+                        Download AI Avatar
+                      </button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+            )}
+
 
             {/* RIGHT SIDE - Image Preview */}
-<div
-  className={cn(
-    "bg-gray-900 relative flex-col",
+            <div
+              className={cn(
+                "bg-gray-900 relative flex-col",
 
-    // Desktop: always right panel
-    "hidden lg:flex lg:w-1/2 lg:p-6",
+                // Desktop: always right panel
+                "hidden md:flex lg:w-1/2 lg:p-6",
 
-    // Mobile overlay (only when generating / generated)
-    (isGenerating || isGenerated)
-      ? "fixed inset-0 z-[999] flex w-full h-full p-4 lg:static lg:z-auto"
-      : "hidden"
-  )}
->
+                // Mobile overlay (only when generating / generated)
+                (isGenerating || isGenerated)
+                  ? "fixed inset-0 z-[999] flex w-full h-full p-4 lg:static lg:z-auto"
+                  : "hidden"
+              )}
+            >
 
 
-  
-  {/* Type Selection Tabs - Header */}
-  {/* Type Selection Tabs - Header */}
-{!isGenerated && !isGenerating && (
-  <div className="mb-6">
-    <div className="flex gap-2 bg-white/10 backdrop-blur-sm rounded-xl p-1">
-      {generationOptions.map((opt) => (
-        <button
-          key={opt.id}
-          onClick={() => setPreviewType(opt.id)}
-          className={cn(
-            "flex-1 px-3 py-2 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-1.5",
-            previewType === opt.id
-              ? "bg-white text-gray-900"
-              : "text-white/70 hover:text-white"
-          )}
-        >
-          <opt.icon className="w-3.5 h-3.5" />
-          {opt.title}
-        </button>
-      ))}
-    </div>
-  </div>
-)}
 
-  {/* Preview Area */}
-<div
-  className={cn(
-    "relative w-full h-full overflow-hidden",
-    "rounded-none lg:rounded-2xl"
-  )}
->
-  <AnimatePresence mode="wait">
-    {isGenerating ? (
-      <motion.div
-        key="loading"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-className="relative w-full h-full min-h-[70vh] rounded-2xl overflow-hidden flex items-center justify-center"
-      >
-        {/* Background Image */}
-        <div
-          className="absolute inset-0 bg-cover bg-center scale-105"
-          style={{
-            backgroundImage: "url('/assets/images/base.png')",
-          }}
-        />
-        <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
-        
+              {/* Type Selection Tabs - Header */}
+              {/* Type Selection Tabs - Header */}
+              {!isGenerated && !isGenerating && (
+                <div className="mb-6">
+                  <div className="flex gap-2 bg-white/10 backdrop-blur-sm rounded-xl p-1">
+                    {generationOptions.map((opt) => (
+                      <button
+                        key={opt.id}
+                        onClick={() => setPreviewType(opt.id)}
+                        className={cn(
+                          "flex-1 px-3 py-2 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-1.5",
+                          previewType === opt.id
+                            ? "bg-white text-gray-900"
+                            : "text-white/70 hover:text-white"
+                        )}
+                      >
+                        <opt.icon className="w-3.5 h-3.5" />
+                        {opt.title}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
-        {/* Foreground Fade Image */}
-        <AnimatePresence mode="wait">
-  <motion.img
-    key={fgIndex}
-    src={loadingForegroundImages[fgIndex]}
-    initial={{ opacity: 0, scale: 0.9 }}
-    animate={{ opacity: 1, scale: 1 }}
-    exit={{ opacity: 0, scale: 1.05 }}
-    transition={{ duration: 0.6, ease: "easeOut" }}
-   className="
+              {/* Preview Area */}
+              <div
+                className={cn(
+                  "relative w-full h-full overflow-hidden",
+                  "rounded-none lg:rounded-2xl"
+                )}
+              >
+                <AnimatePresence mode="wait">
+                  {isGenerating ? (
+                    <motion.div
+                      key="loading"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="relative w-full h-full min-h-[70vh] rounded-2xl overflow-hidden flex items-center justify-center"
+                    >
+                      {/* Background Image */}
+                      <div
+                        className="absolute inset-0 bg-cover bg-center scale-105"
+                        style={{
+                          backgroundImage: "url('/assets/images/base.png')",
+                        }}
+                      />
+                      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+
+
+                      {/* Foreground Fade Image */}
+                      <AnimatePresence mode="wait">
+                        <motion.img
+                          key={fgIndex}
+                          src={loadingForegroundImages[fgIndex]}
+                          initial={{ opacity: 0, scale: 0.9 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 1.05 }}
+                          transition={{ duration: 0.6, ease: "easeOut" }}
+                          className="
   absolute
   left-1/2
   top-1/2
@@ -719,54 +818,54 @@ className="relative w-full h-full min-h-[70vh] rounded-2xl overflow-hidden flex 
   shadow-2xl
 "
 
-  />
-</AnimatePresence>
+                        />
+                      </AnimatePresence>
 
 
 
-        {/* Countdown */}
-        <div className="absolute bottom-8 z-20 text-center text-white">
-          <div className="text-5xl font-mono font-bold tracking-wider drop-shadow-lg">
-            {formattedCountdown}
-          </div>
-          <p className="text-xs mt-2 text-white/70">
-            Generating your AI Avatar...
-          </p>
-        </div>
-      </motion.div>
-    ) : (
-      <motion.div
-        key={isGenerated ? "result" : previewType}
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.95 }}
-        className="w-full h-full flex items-center justify-center px-6 pb-16"
-      >
-        <img
-          src={isGenerated ? generatedImageUrl : activeOption.previewImg}
-          alt="Avatar preview"
-          className="
+                      {/* Countdown */}
+                      <div className="absolute bottom-8 z-20 text-center text-white">
+                        <div className="text-5xl font-mono font-bold tracking-wider drop-shadow-lg">
+                          {formattedCountdown}
+                        </div>
+                        <p className="text-xs mt-2 text-white/70">
+                          Generating your AI Avatar...
+                        </p>
+                      </div>
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key={isGenerated ? "result" : previewType}
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.95 }}
+                      className="w-full h-full flex items-center justify-center px-6 pb-16"
+                    >
+                      <img
+                        src={isGenerated ? generatedImageUrl : activeOption.previewImg}
+                        alt="Avatar preview"
+                        className="
             max-h-[75vh]
             max-w-full
             object-contain
             rounded-2xl
             shadow-2xl
           "
-          onError={(e) => {
-            e.currentTarget.src = activeOption.previewImg;
-          }}
-        />
-      </motion.div>
-    )}
-  </AnimatePresence>
+                        onError={(e) => {
+                          e.currentTarget.src = activeOption.previewImg;
+                        }}
+                      />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
 
-  {/* Bottom branding */}
-  <div className="pt-4 text-center text-white/60 text-xs shrink-0">
-    Created using FrameForge.one
-  </div>
-</div>
+                {/* Bottom branding */}
+                <div className="pt-4 text-center text-white/60 text-xs shrink-0">
+                  Created using FrameForge.one
+                </div>
+              </div>
 
-</div>
+            </div>
 
           </motion.div>
         </motion.div>

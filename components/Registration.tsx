@@ -5,6 +5,7 @@ import { toast, Toaster } from "react-hot-toast";
 import { useState, useEffect } from "react";
 import { allCountries } from "country-telephone-data";
 import AvatarGeneratorModal from "@/components/AvatarGeneratorModal";
+import AiModalPop from "./AiModalPop";
 
 interface RegistrationModalProps {
   isOpen: boolean;
@@ -59,6 +60,8 @@ export default function RegistrationModal({
   >("idle");
   const [selectedTicket, setSelectedTicket] = useState<TicketType | null>(null);
   const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
+  const [showPhoneModal, setShowPhoneModal] = useState(false);
+  
 
   useEffect(() => {
     if (isOpen) {
@@ -152,9 +155,9 @@ export default function RegistrationModal({
             toast.success("Payment successful");
             setTicketID(verifyResult.response.event_register_id);
             setStep("success");
-            setTimeout(() => {
-              setIsAvatarModalOpen(true);
-            }, 800);
+            // setTimeout(() => {
+            //   setIsAvatarModalOpen(true);
+            // }, 800);
           } else {
             toast.error("Payment verification failed");
           }
@@ -300,9 +303,9 @@ export default function RegistrationModal({
       );
       setRegisterStatus("submitted");
       setStep("success");
-      setTimeout(() => {
-        setIsAvatarModalOpen(true);
-      }, 800);
+      // setTimeout(() => {
+      //   setIsAvatarModalOpen(true);
+      // }, 800);
     } catch (error) {
       toast.error("Something went wrong");
       console.error(error);
@@ -326,23 +329,23 @@ export default function RegistrationModal({
   return (
     <>
       {/* Overlay with backdrop blur */}
-{/* Overlay with backdrop blur */}
-<div
-  className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm"
-  onClick={onClose}   // 👈 close when clicking outside
->
-        {/* Modal Container - Full screen on mobile, split on desktop */}
-        <div className="fixed inset-0 flex items-center justify-center p-0 md:p-4">
-  <div
-    className="relative w-full h-full md:h-auto md:max-h-[90vh] md:max-w-6xl md:rounded-2xl overflow-hidden bg-white shadow-2xl flex flex-col md:flex-row"
-    onClick={(e) => e.stopPropagation()}   // 👈 prevent outside click close
-  >
-    <button
-  onClick={onClose}
-  className="absolute top-4 right-4 z-50 text-gray-600 hover:text-red-600 transition"
->
-  <X size={26} />
-</button>
+      {/* Overlay with backdrop blur */}
+      <div
+        className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm"
+        onClick={onClose}   // 👈 close when clicking outside
+      >
+              {/* Modal Container - Full screen on mobile, split on desktop */}
+              <div className="fixed inset-0 flex items-center justify-center p-0 md:p-4">
+        <div
+          className="relative w-full h-full md:h-auto md:max-h-[90vh] md:max-w-6xl md:rounded-2xl overflow-hidden bg-white shadow-2xl flex flex-col md:flex-row"
+          onClick={(e) => e.stopPropagation()}   // 👈 prevent outside click close
+        >
+          <button
+        onClick={onClose}
+        className="absolute top-4 right-4 z-50 text-gray-600 hover:text-red-600 transition"
+      >
+        <X size={26} />
+      </button>
 
 
             
@@ -357,6 +360,8 @@ export default function RegistrationModal({
                   getBoxStyle={getBoxStyle}
                   handleSubmit={handleSubmit}
                   onClose={onClose}
+                  showPhoneModal={showPhoneModal}
+                  setShowPhoneModal={setShowPhoneModal}
                 />
               )}
 
@@ -374,13 +379,13 @@ export default function RegistrationModal({
 
               
                 {step === "success" && (
-  <SuccessModal
-    onClose={onClose}
-    setStep={setStep}
-    ticketID={ticketID}
-    onOpenAvatar={() => setIsAvatarModalOpen(true)}
-  />
-)}
+                  <SuccessModal
+                    onClose={onClose}
+                    setStep={setStep}
+                    ticketID={ticketID}
+                    onOpenAvatar={() => setIsAvatarModalOpen(true)}
+                  />
+                )}
 
              
             </div>
@@ -438,8 +443,11 @@ export default function RegistrationModal({
       />
 
       <Toaster position="top-center" reverseOrder={false} />
+      {showPhoneModal && <AiModalPop />}
+
     </>
   );
+  
 }
 
 /* ---------------- Registration Form ---------------- */
@@ -451,6 +459,8 @@ function RegistrationForm({
   getBoxStyle,
   handleSubmit,
   onClose,
+  showPhoneModal,
+  setShowPhoneModal
 }: {
   formData: FormFields;
   handleChange: (
@@ -461,6 +471,8 @@ function RegistrationForm({
   getBoxStyle: (fieldName: string) => React.CSSProperties;
   handleSubmit: (e: React.FormEvent) => void;
   onClose: () => void;
+  showPhoneModal: boolean;
+  setShowPhoneModal: (value: boolean) => void;
 }) {
   return (
     <div className="p-8 md:p-10 lg:p-12 relative h-full bg-white">
@@ -471,10 +483,7 @@ function RegistrationForm({
         Register Now!
       </h1>
 
-      <p
-        className="text-lg md:text-base mb-8 text-gray-500 "
-        
-      >
+      <p className="text-lg md:text-base mb-8 text-gray-500 " >
         Secure your spot and be part of the excitement! Register now to receive your entry pass.
       </p>
 
@@ -677,15 +686,17 @@ function RegistrationForm({
         <div className="text-left pb-2">
           <p className="text-sm text-gray-600">
             Already have an account?{' '}
-            <a href="#" className="text-indigo-600 hover:text-indigo-700">
+            <span onClick={()=>{setShowPhoneModal(true)}} className="text-indigo-600 hover:text-indigo-700 cursor-pointer ">
               Go here
-            </a>
+            </span>
           </p>
         </div>
       </form>
     </div>
   );
+
 }
+
 
 /* ---------------- Ticket Selection Modal ---------------- */
 const TicketTypeModal: React.FC<TicketTypeModalProps> = ({
@@ -882,7 +893,7 @@ function SuccessModal({
   onClose: () => void;
   setStep: React.Dispatch<React.SetStateAction<"form" | "ticket" | "success">>;
   ticketID: string;
-  onOpenAvatar: () => void;
+  onOpenAvatar: (open: boolean) => void;
 }) {
 
   const [guestData, setGuestData] = useState<any>(null);
@@ -1048,8 +1059,8 @@ if (imageUrl) {
         {/* Next Step Button */}
        <button
   onClick={() => {
-    onClose();          // close registration modal
-    onOpenAvatar();    // open avatar modal
+    // onClose();          // close registration modal
+    onOpenAvatar(true);    // open avatar modal
   }}
   disabled={loading}
   className="w-full py-4 mb-10 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed"

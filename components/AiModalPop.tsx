@@ -8,6 +8,7 @@ import {
   DialogTitle,
   DialogClose,
 } from "@/components/ui/dialog";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { toast, Toaster } from "react-hot-toast";
 import { allCountries } from "country-telephone-data";
 import {
@@ -42,9 +43,10 @@ const FIXED_VALIDATE_PAYLOAD = {
 
 interface AiModalPopProps {
   showFloatingIcon?: boolean;
+  showFloatingform?: boolean;
 }
 
-export function AiModalPop({ showFloatingIcon = true }: AiModalPopProps) {
+export function AiModalPop({ showFloatingIcon = true,showFloatingform = true }: AiModalPopProps) {
   const [showPhoneModal, setShowPhoneModal] = useState(false);
   const [showExistingImageModal, setShowExistingImageModal] = useState(false);
   const [existingImageUrl, setExistingImageUrl] = useState("");
@@ -54,6 +56,7 @@ export function AiModalPop({ showFloatingIcon = true }: AiModalPopProps) {
     useState<AvatarRegistrationData | null>(null);
   const [countryCode, setCountryCode] = useState("+91"); // Country dial code
   const [phone, setPhone] = useState(""); // Just the digits
+  const [mail, setMail] = useState("");
   const [selectedCountry, setSelectedCountry] = useState("+91"); // Track selected country
   const [countrySearch, setCountrySearch] = useState(""); // Search filter for countries
   const [otp, setOtp] = useState("");
@@ -194,65 +197,122 @@ export function AiModalPop({ showFloatingIcon = true }: AiModalPopProps) {
     }
   };
 
+  const handleSendMail = async (finalImageUrl: any) => {
+    console.log("mail",mail);
+    
+    if (!mail.trim()) {
+      toast.error("Please enter a mail address");
+      return;
+    }
+    // const response = await fetch("http://localhost:3002/scaleup2026/otp/generate", {
+    //   method: "POST",
+    //   headers: { "Content-Type": "application/json" },
+    //   body: JSON.stringify({
+    //     mail: mail,
+    //   }),
+    // });
+
+    // console.log("OTP Generate Response Status:", response.status);
+    // const responseData = await response.json().catch(() => ({}));
+    // console.log("OTP Generate Response Data:", responseData);
+
+    // if (response.ok) {
+    //   setOtpSent(true);
+    //   setTimeLeft(600);
+    //   toast.success("OTP sent to your mail address");
+    // } else {
+    //   toast.error(responseData.error || "OTP not able to send.");
+    // }
+    
+    try {
+      const res = await fetch("/api/send-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          to: mail,
+          subject: "ScaleUp Conclave 2026 - OTP Verification",
+          otp : "9876",
+          // finalImageUrl: finalImageUrl || "No image URL found",
+        }),
+      });
+
+      const data = await res.json();
+      console.log("data",data);
+        setOtpSent(true);
+      
+      if (data.success) {
+        console.log("Mail sent successfully ✅");
+        setOtpSent(true);
+        setTimeLeft(600);
+      } else {
+        console.error("Failed to send mail ❌");
+      }
+    } catch (err) {
+      console.error("Error sending mail:", err);
+    }
+  };
+
   const handleSendOtp = async () => {
+    console.log("phone",phone);
+    
     if (!phone.trim()) {
       toast.error("Please enter a phone number");
       return;
     }
 
-    const combined = countryCode + phone;
+    const combined = phone;
     console.log("Sending OTP for:", combined);
 
     setLoading(true);
     try {
-      const validatePayload = new FormData();
-      validatePayload.append("name", FIXED_VALIDATE_PAYLOAD.name);
-      validatePayload.append("email", FIXED_VALIDATE_PAYLOAD.email);
-      validatePayload.append("phone", combined);
-      validatePayload.append("district", FIXED_VALIDATE_PAYLOAD.district);
-      validatePayload.append("category", FIXED_VALIDATE_PAYLOAD.category);
-      validatePayload.append(
-        "organization",
-        FIXED_VALIDATE_PAYLOAD.organization,
-      );
-      validatePayload.append(
-        "did_you_attend_the_previous_scaleup_conclave_",
-        FIXED_VALIDATE_PAYLOAD.did_you_attend_the_previous_scaleup_conclave_,
-      );
+      // const validatePayload = new FormData();
+      // validatePayload.append("name", FIXED_VALIDATE_PAYLOAD.name);
+      // validatePayload.append("email", FIXED_VALIDATE_PAYLOAD.email);
+      // validatePayload.append("phone", combined);
+      // validatePayload.append("district", FIXED_VALIDATE_PAYLOAD.district);
+      // validatePayload.append("category", FIXED_VALIDATE_PAYLOAD.category);
+      // validatePayload.append(
+      //   "organization",
+      //   FIXED_VALIDATE_PAYLOAD.organization,
+      // );
+      // validatePayload.append(
+      //   "did_you_attend_the_previous_scaleup_conclave_",
+      //   FIXED_VALIDATE_PAYLOAD.did_you_attend_the_previous_scaleup_conclave_,
+      // );
 
-      const validateResponse = await fetch(MAKEMYPASS_VALIDATE_URL, {
-        method: "POST",
-        body: validatePayload,
-      });
+      // const validateResponse = await fetch(MAKEMYPASS_VALIDATE_URL, {
+      //   method: "POST",
+      //   body: validatePayload,
+      // });
 
-      if (validateResponse.status === 200) {
-        openRegistrationModal();
-        toast.error("You are not registered. Please complete registration first.");
-        setLoading(false);
-        setShowPhoneModal(false);
-        return;
-      }
+      // if (validateResponse.status === 200) {
+      //   openRegistrationModal();
+      //   toast.error("You are not registered. Please complete registration first.");
+      //   setLoading(false);
+      //   setShowPhoneModal(false);
+      //   return;
+      // }
 
-      if (validateResponse.status === 400) {
-        const storedUrl = getStoredImageUrl(combined);
-        if (storedUrl) {
-          handleShowExistingImage(storedUrl);
-          setLoading(false);
-          return;
-        }
+      // if (validateResponse.status === 400) {
+      //   const storedUrl = getStoredImageUrl(combined);
+      //   if (storedUrl) {
+      //     handleShowExistingImage(storedUrl);
+      //     setLoading(false);
+      //     return;
+      //   }
 
-        setShouldOpenAvatarAfterOtp(true);
-      } else {
-        toast.error("Unable to verify registration. Please try again.");
-        setLoading(false);
-        return;
-      }
+      //   setShouldOpenAvatarAfterOtp(true);
+      // } else {
+      //   toast.error("Unable to verify registration. Please try again.");
+      //   setLoading(false);
+      //   return;
+      // }
 
       const response = await fetch("https://scaleup.frameforge.one/scaleup2026/otp/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          phoneNumber: combined,
+          phone_no: combined,
         }),
       });
 
@@ -289,12 +349,12 @@ export function AiModalPop({ showFloatingIcon = true }: AiModalPopProps) {
       const response = await fetch(
         "https://scaleup.frameforge.one/scaleup2026/otp/verify",
         {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          phoneNumber: combined,
-          otp,
-        }),
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            phoneNumber: combined,
+            otp,
+          }),
         },
       );
 
@@ -378,6 +438,7 @@ export function AiModalPop({ showFloatingIcon = true }: AiModalPopProps) {
     setSelectedCountry("+91");
     setCountrySearch("");
     setPhone("");
+    setMail("");
     setOtp("");
     setOtpSent(false);
     setTimeLeft(600);
@@ -434,154 +495,121 @@ export function AiModalPop({ showFloatingIcon = true }: AiModalPopProps) {
 
       {/* Phone & OTP Modal */}
       <Dialog open={showPhoneModal} onOpenChange={handleClosePhoneModal}>
-        <DialogContent
-          className="fixed w-[95vw] sm:w-full max-w-md rounded-xl p-6"
-          style={{
-            backgroundColor: "#fff",
-            color: "var(--neutral-50)",
-          }}
-        >
-          <DialogClose asChild />
-          <DialogHeader className="flex flex-col items-center text-center space-y-2">
-            <DialogTitle className="text-lg font-[700]">
-              {otpSent ? "Enter OTP" : "Verify Phone Number"}
-            </DialogTitle>
-          </DialogHeader>
+        <DialogContent className="w-[600px] h-[372px] p-0 overflow-hidden rounded-xl [&>button]:text-white ">
+        <VisuallyHidden>
+          <DialogTitle>Phone Number Verification</DialogTitle>
+        </VisuallyHidden>
 
-          <div className="space-y-4 mt-6">
-            {!otpSent ? (
-              <>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">
-                    Phone Number
-                  </label>
-                  <div className="flex flex-col sm:flex-row gap-2">
-                    <Select
-                      value={selectedCountry}
-                      onValueChange={(code) => {
-                        setSelectedCountry(code);
-                        setCountryCode(code);
-                        setCountrySearch("");
-                      }}
+          <div className="flex flex-col md:flex-row h-full">
+
+            {/* LEFT SIDE - Forms */}
+            <div
+              className={`w-full md:w-1/2 ${
+                !otpSent ? "flex" : "grid"
+              } items-center overflow-y-auto bg-white p-4`}
+            >
+
+              {!otpSent ? (
+                <>
+                  <div className="space-y-2">
+                    <label className="text-sm  font-medium text-gray-700">
+                      Email Address
+                    </label>
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <input
+                        type="email"
+                        placeholder="Enter Email Address"
+                        value={mail}
+                        onChange={(e) => setMail(e.target.value)}
+                        className="w-full h-10 sm:flex-1 px-3 py-1 border-2 rounded-lg focus:ring-2 outline-none h-10"
+                      />
+                    </div>
+                    <button
+                      onClick={handleSendMail}
+                      disabled={loading}
+                      className="w-full px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      <SelectTrigger className="w-full sm:w-40 h-10 border-2 border-purple-500 focus:ring-2 focus:ring-purple-600 text-gray-900 bg-white">
-                        <SelectValue>
-                          <span className="text-gray-900 font-medium">
-                            {selectedCountry}
-                          </span>
-                        </SelectValue>
-                      </SelectTrigger>
-                      <SelectContent className="max-h-80">
-                        <div className="sticky top-0 bg-white p-2 border-b">
-                          <input
-                            type="text"
-                            placeholder="Search country or code..."
-                            value={countrySearch}
-                            onChange={(e) => setCountrySearch(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-600 focus:border-purple-600 outline-none text-sm"
-                            onClick={(e) => e.stopPropagation()}
-                          />
-                        </div>
-                        <div className="max-h-60 overflow-y-auto">
-                          {filteredCountries.length > 0 ? (
-                            filteredCountries.map(
-                              (country: any, index: number) => (
-                                <SelectItem
-                                  key={`${country.iso2 || country.name}-${index}`}
-                                  value={country.dialCode}
-                                  className="cursor-pointer"
-                                >
-                                  <span className="font-medium">
-                                    {country.dialCode}
-                                  </span>{" "}
-                                  {country.name}
-                                </SelectItem>
-                              ),
-                            )
-                          ) : (
-                            <div className="px-3 py-2 text-sm text-gray-500">
-                              No countries found
-                            </div>
-                          )}
-                        </div>
-                      </SelectContent>
-                    </Select>
+                      {loading ? "Sending..." : "Get Code"}
+                    </button>
+                  </div>
+
+                  
+                </>
+              ) : (
+                <>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">
+                      Enter OTP
+                    </label>
+                    <p className="text-xs text-gray-500">
+                      OTP sent to {countryCode}
+                      {phone}
+                    </p>
                     <input
-                      type="tel"
-                      placeholder="Enter phone number"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      className="w-full sm:flex-1 px-3 py-2 border-2 border-purple-500 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-purple-600 outline-none h-10"
+                      type="text"
+                      placeholder="Enter 6-digit OTP"
+                      value={otp}
+                      onChange={(e) =>
+                        setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))
+                      }
+                      maxLength={6}
+                      className="w-full px-3 py-2 border-2 border-indigo-500 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 outline-none text-center text-xl sm:text-2xl tracking-widest"
                     />
                   </div>
-                </div>
 
-                <button
-                  onClick={handleSendOtp}
-                  disabled={loading}
-                  className="w-full px-4 py-2 rounded-lg bg-purple-600 text-white font-medium hover:bg-purple-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {loading ? "Sending..." : "Get Code"}
-                </button>
-              </>
-            ) : (
-              <>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">
-                    Enter OTP
-                  </label>
-                  <p className="text-xs text-gray-500">
-                    OTP sent to {countryCode}
-                    {phone}
-                  </p>
-                  <input
-                    type="text"
-                    placeholder="Enter 6-digit OTP"
-                    value={otp}
-                    onChange={(e) =>
-                      setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))
-                    }
-                    maxLength={6}
-                    className="w-full px-3 py-2 border-2 border-purple-500 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-purple-600 outline-none text-center text-xl sm:text-2xl tracking-widest"
-                  />
-                </div>
+                  <button
+                    onClick={handleVerifyOtp}
+                    disabled={loading || otp.length !== 6}
+                    className="w-full px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {loading ? "Verifying..." : "Verify OTP"}
+                  </button>
 
-                <button
-                  onClick={handleVerifyOtp}
-                  disabled={loading || otp.length !== 6}
-                  className="w-full px-4 py-2 rounded-lg bg-purple-600 text-white font-medium hover:bg-purple-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {loading ? "Verifying..." : "Verify OTP"}
-                </button>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-600">Didn't receive OTP?</span>
+                    {timeLeft > 0 ? (
+                      <span className="text-indigo-600 font-medium">
+                        Resend in {formatTime(timeLeft)}
+                      </span>
+                    ) : (
+                      <button
+                        onClick={handleResendOtp}
+                        className="text-indigo-600 font-medium hover:text-indigo-700"
+                      >
+                        Resend OTP
+                      </button>
+                    )}
+                  </div>
 
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-600">Didn't receive OTP?</span>
-                  {timeLeft > 0 ? (
-                    <span className="text-purple-600 font-medium">
-                      Resend in {formatTime(timeLeft)}
-                    </span>
-                  ) : (
-                    <button
-                      onClick={handleResendOtp}
-                      className="text-purple-600 font-medium hover:text-purple-700"
-                    >
-                      Resend OTP
-                    </button>
-                  )}
-                </div>
+                  <button
+                    onClick={() => {
+                      resetForm();
+                      setOtpSent(false);
+                    }}
+                    className="w-full px-4 py-2 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 transition"
+                  >
+                    Change Mail Address
+                  </button>
+                </>
+              )}
 
-                <button
-                  onClick={() => {
-                    resetForm();
-                    setOtpSent(false);
+            </div>
+
+            {/* RIGHT SIDE - Images/GIF */}
+            <div className="hidden md:block md:w-1/2 relative bg-gray-900">
+              <div className="absolute inset-0 flex items-center justify-center p-0">
+                <img
+                  src="/assets/images/reg1.png"
+                  alt="Register"
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
                   }}
-                  className="w-full px-4 py-2 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 transition"
-                >
-                  Change Phone Number
-                </button>
-              </>
-            )}
+                />
+              </div>
+            </div>
           </div>
+
         </DialogContent>
       </Dialog>
 
@@ -638,16 +666,16 @@ export function AiModalPop({ showFloatingIcon = true }: AiModalPopProps) {
         !showExistingImageModal &&
         !isAvatarModalOpen &&
         !isExternalModalOpen && (
-        <button
-          onClick={openPhoneModal}
-          className="fixed bottom-8 right-8 z-50 w-40 h-40 rounded-full transition-all flex items-center justify-center hover:scale-110 transform duration-300 animate-bounce"
-          // className="fixed bottom-8 right-8 z-50 w-20 h-20 rounded-full bg-gradient-to-br from-purple-600 to-purple-700 text-white shadow-2xl hover:shadow-purple-500/50 hover:from-purple-700 hover:to-purple-800 transition-all flex items-center justify-center hover:scale-110 transform duration-300 animate-bounce"
-          style={{ position: 'fixed' }}
-          title="Generate AI Avatar"
-        >
-          <img src="/AI.png" alt="AI" className="h-40 w-40" />
-        </button>
-      )}
+          <button
+            onClick={openPhoneModal}
+            className="fixed bottom-8 right-8 !z-99 w-40 h-40 rounded-full transition-all flex items-center justify-center hover:scale-110 transform duration-300 animate-bounce"
+            // className="fixed bottom-8 right-8 z-50 w-20 h-20 rounded-full bg-gradient-to-br from-purple-600 to-purple-700 text-white shadow-2xl hover:shadow-purple-500/50 hover:from-purple-700 hover:to-purple-800 transition-all flex items-center justify-center hover:scale-110 transform duration-300 animate-bounce"
+            style={{ position: 'fixed' }}
+            title="Generate AI Avatar"
+          >
+            <img src="/AI.png" alt="AI" className="h-40 w-40" />
+          </button>
+        )}
     </>
   );
 }
