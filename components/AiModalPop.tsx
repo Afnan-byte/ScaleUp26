@@ -36,9 +36,14 @@ const FIXED_VALIDATE_PAYLOAD = {
 interface AiModalPopProps {
   showFloatingIcon?: boolean;
   showFloatingform?: boolean;
+  onOpenRegistration?: () => void;
 }
 
-export function AiModalPop({ showFloatingIcon = true,showFloatingform = true }: AiModalPopProps) {
+export function AiModalPop({
+  showFloatingIcon = true,
+  showFloatingform = true,
+  onOpenRegistration,
+}: AiModalPopProps) {
   const [showPhoneModal, setShowPhoneModal] = useState(false);
   const [showExistingImageModal, setShowExistingImageModal] = useState(false);
   const [existingImageUrl, setExistingImageUrl] = useState("");
@@ -46,6 +51,7 @@ export function AiModalPop({ showFloatingIcon = true,showFloatingform = true }: 
   const [isExternalModalOpen, setIsExternalModalOpen] = useState(false);
   const [avatarRegistrationData, setAvatarRegistrationData] =
     useState<AvatarRegistrationData | null>(null);
+  
   const [mail, setMail] = useState("");
   const [otp, setOtp] = useState("");
   const [otpSent, setOtpSent] = useState(false);
@@ -56,34 +62,34 @@ export function AiModalPop({ showFloatingIcon = true,showFloatingform = true }: 
 
   const OTP_VERIFY_TTL_MS = 5 * 60 * 1000;
 
-  const getVerifiedAt = (phoneValue: string) => {
-    if (!phoneValue || typeof window === "undefined") return 0;
+  const getVerifiedAt = (email: string) => {
+    if (!email || typeof window === "undefined") return 0;
     const raw = localStorage.getItem(
-      `scaleup2026:otp_verified_at:${phoneValue}`,
+      `scaleup2026:otp_verified_at:${email}`,
     );
     const parsed = raw ? Number(raw) : 0;
     return Number.isFinite(parsed) ? parsed : 0;
   };
 
-  const setVerifiedAt = (phoneValue: string) => {
-    if (!phoneValue || typeof window === "undefined") return;
+  const setVerifiedAt = (email: string) => {
+    if (!email || typeof window === "undefined") return;
     localStorage.setItem(
-      `scaleup2026:otp_verified_at:${phoneValue}`,
+      `scaleup2026:otp_verified_at:${email}`,
       Date.now().toString(),
     );
   };
 
-  const clearVerifiedAt = (phoneValue: string) => {
-    if (!phoneValue || typeof window === "undefined") return;
-    localStorage.removeItem(`scaleup2026:otp_verified_at:${phoneValue}`);
+  const clearVerifiedAt = (email: string) => {
+    if (!email || typeof window === "undefined") return;
+    localStorage.removeItem(`scaleup2026:otp_verified_at:${email}`);
   };
 
-  const isVerifiedRecently = (mailValue: string) => {
-    const verifiedAt = getVerifiedAt(mailValue);
+  const isVerifiedRecently = (email: string) => {
+    const verifiedAt = getVerifiedAt(email);
     if (!verifiedAt) return false;
     const expired = Date.now() - verifiedAt > OTP_VERIFY_TTL_MS;
     if (expired) {
-      clearVerifiedAt(mailValue);
+      clearVerifiedAt(email);
       return false;
     }
     return true;
@@ -111,6 +117,7 @@ export function AiModalPop({ showFloatingIcon = true,showFloatingform = true }: 
       window.removeEventListener("open-aipop", openAiPop as EventListener);
     };
   }, []);
+
 
   useEffect(() => {
     const handleRegistrationOpen = () => setIsExternalModalOpen(true);
@@ -175,11 +182,11 @@ export function AiModalPop({ showFloatingIcon = true,showFloatingform = true }: 
     window.dispatchEvent(new CustomEvent("open-registration-modal"));
   };
 
-  const getStoredImageUrl = (phoneValue: string) => {
-    if (!phoneValue || typeof window === "undefined") return "";
+  const getStoredImageUrl = (email: string) => {
+    if (!email || typeof window === "undefined") return "";
     try {
       return (
-        localStorage.getItem(`scaleup2026:final_image_url:${phoneValue}`) || ""
+        localStorage.getItem(`scaleup2026:final_image_url:${email}`) || ""
       );
     } catch (error) {
       console.error("Failed to read stored image URL:", error);
@@ -197,92 +204,85 @@ export function AiModalPop({ showFloatingIcon = true,showFloatingform = true }: 
   };
 
   const handleSendMail = async () => {
-    if (!mail.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mail)) {
+    if (!mail.trim()) {
+      toast.error("Please enter a mail address");
+      return;
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(mail)) {
       toast.error("Please enter a valid email address");
       return;
     }
 
+    const formData = new FormData();
+    formData.append("name", FIXED_VALIDATE_PAYLOAD.name);
+    formData.append("phone", FIXED_VALIDATE_PAYLOAD.phone);
+    formData.append("district", FIXED_VALIDATE_PAYLOAD.district);
+    formData.append("category", FIXED_VALIDATE_PAYLOAD.category);
+    formData.append("organization", FIXED_VALIDATE_PAYLOAD.organization);
+    formData.append(
+      "did_you_attend_the_previous_scaleup_conclave_",
+      FIXED_VALIDATE_PAYLOAD.did_you_attend_the_previous_scaleup_conclave_
+    );
+    formData.append("email", mail);
+
     setLoading(true);
     try {
-      // 1. Validate RSVP with MakeMyPass
-      const validatePayload = new FormData();
-      validatePayload.append("name", FIXED_VALIDATE_PAYLOAD.name);
-      validatePayload.append("email", mail);
-      validatePayload.append("phone", FIXED_VALIDATE_PAYLOAD.phone);
-      validatePayload.append("district", FIXED_VALIDATE_PAYLOAD.district);
-      validatePayload.append("category", FIXED_VALIDATE_PAYLOAD.category);
-      validatePayload.append(
-        "organization",
-        FIXED_VALIDATE_PAYLOAD.organization,
-      );
-      validatePayload.append(
-        "did_you_attend_the_previous_scaleup_conclave_",
-        FIXED_VALIDATE_PAYLOAD.did_you_attend_the_previous_scaleup_conclave_,
-      );
-
-      const validateResponse = await fetch(MAKEMYPASS_VALIDATE_URL, {
+      // 1. Validate with MakeMyPass API
+      const makemypassRes = await fetch(MAKEMYPASS_VALIDATE_URL, {
         method: "POST",
-        body: validatePayload,
+        body: formData,
       });
 
-      if (validateResponse.status === 400) {
-        // User already registered
-        const storedUrl = getStoredImageUrl(mail);
-        if (storedUrl) {
-          handleShowExistingImage(storedUrl);
-          setLoading(false);
-          return;
-        }
-        setShouldOpenAvatarAfterOtp(true);
-      } else if (validateResponse.status === 200) {
-        openRegistrationModal();
-        toast.error("You are not registered. Please complete registration first.");
-        setLoading(false);
-        setShowPhoneModal(false);
-        return;
-      } else {
-        toast.error("Unable to verify registration. Please try again.");
-        setLoading(false);
-        return;
-      }
+      const makemypassData = await makemypassRes.json().catch(() => ({}));
 
-      // 2. Generate OTP from backend
-      const response = await fetch("https://scaleup.frameforge.one/scaleup2026/otp/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: mail,
-          phoneNumber: mail, // Alias
-        }),
-      });
-
-      const responseData = await response.json().catch(() => ({}));
-      if (response.ok && responseData.otp) {
-        // 3. Send OTP via local mailer
-        const mailRes = await fetch("/api/send-otp", {
+      // Handle response based on status
+      if (makemypassRes.status === 400) {
+        // User exists but needs verification -> Redirect to OTP verification
+        // Call /api/otp/generate endpoint to create OTP
+        const otpRes = await fetch("/api/otp/generate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            to: mail,
-            subject: "Your ScaleUp OTP Code",
-            otp: responseData.otp,
+            email: mail,
           }),
         });
 
-        const mailData = await mailRes.json();
-        if (mailData.success) {
+        const otpData = await otpRes.json();
+
+        if (otpRes.ok) {
           setOtpSent(true);
           setTimeLeft(600);
-          toast.success("OTP sent to your email address");
+          toast.success("OTP sent to your email");
         } else {
-          toast.error("Failed to send email. Please try again.");
+          console.error("Failed to send OTP", otpData);
+          toast.error(otpData.error || "Failed to send OTP. Please try again.");
         }
+      } else if (makemypassRes.status === 404 || makemypassRes.status === 200) {
+        // User not registered -> Redirect to registration form
+        toast.error("You are not registered. Please register first.");
+        if (onOpenRegistration) {
+          onOpenRegistration();
+          setShowPhoneModal(false);
+        }
+        setLoading(false);
+        return;
       } else {
-        toast.error(responseData.error || "Unable to generate OTP.");
+        console.error("MakeMyPass API validation failed", makemypassData);
+        toast.error(
+          makemypassData.error ||
+            "MakeMyPass API validation failed. Please try again."
+        );
+        setLoading(false);
+        return;
       }
-    } catch (error) {
-      console.error("Error in handleSendMail:", error);
-      toast.error("Error processing request. Please try again.");
+    } catch (err) {
+      console.error("Error sending mail or validating MakeMyPass API:", err);
+      toast.error(
+        "Error sending OTP or validating MakeMyPass API. Please try again."
+      );
     } finally {
       setLoading(false);
     }
@@ -296,17 +296,13 @@ export function AiModalPop({ showFloatingIcon = true,showFloatingform = true }: 
 
     setLoading(true);
     try {
-      const combined = mail;
-      console.log("Verifying OTP for:", combined, "OTP:", otp);
-
       const response = await fetch(
-        "https://scaleup.frameforge.one/scaleup2026/otp/verify",
+        "/api/otp/verify",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            email: combined,
-            phoneNumber: combined, // Alias
+            email: mail,
             otp,
           }),
         },
@@ -320,11 +316,10 @@ export function AiModalPop({ showFloatingIcon = true,showFloatingform = true }: 
           responseData.user?.generated_image_url ||
           responseData.generated_image_url;
         if (backendImageUrl) {
-          console.log("Backend returned image URL:", backendImageUrl);
           // Store it in localStorage for future use
           if (typeof window !== "undefined") {
             localStorage.setItem(
-              `scaleup2026:final_image_url:${combined}`,
+              `scaleup2026:final_image_url:${mail}`,
               backendImageUrl,
             );
           }
@@ -333,7 +328,7 @@ export function AiModalPop({ showFloatingIcon = true,showFloatingform = true }: 
           return;
         }
 
-        toast.success("Email verified successfully!");
+        toast.success("Verified successfully!");
         if (shouldOpenAvatarAfterOtp) {
           handleOpenAvatarGenerator();
         } else {
@@ -357,12 +352,12 @@ export function AiModalPop({ showFloatingIcon = true,showFloatingform = true }: 
   const handleOpenAvatarGenerator = () => {
     setShowPhoneModal(false);
     setAvatarRegistrationData({
-      name: FIXED_VALIDATE_PAYLOAD.name,
+      name: "",
       email: mail,
-      phone_no: FIXED_VALIDATE_PAYLOAD.phone,
-      district: FIXED_VALIDATE_PAYLOAD.district,
-      category: FIXED_VALIDATE_PAYLOAD.category,
-      organization: FIXED_VALIDATE_PAYLOAD.organization,
+      phone_no: "",
+      district: "",
+      category: "",
+      organization: "",
     });
     setIsAvatarModalOpen(true);
     setShouldOpenAvatarAfterOtp(false);
@@ -390,8 +385,6 @@ export function AiModalPop({ showFloatingIcon = true,showFloatingform = true }: 
     setShouldOpenAvatarAfterOtp(false);
   };
 
-  // Filter and selection logic removed as we no longer use phone/country select
-
   const handleClosePhoneModal = () => {
     setShowPhoneModal(false);
     resetForm();
@@ -401,19 +394,28 @@ export function AiModalPop({ showFloatingIcon = true,showFloatingform = true }: 
     if (!existingImageUrl) return;
 
     try {
-      const response = await fetch(existingImageUrl);
+      // Use proxy to fetch image to bypass CORS and force download
+      const filename = `avatar-${mail || "user"}.png`;
+      const proxyUrl = `/api/proxy-image?url=${encodeURIComponent(
+        existingImageUrl
+      )}&filename=${encodeURIComponent(filename)}`;
+
+      const response = await fetch(proxyUrl);
+      if (!response.ok) throw new Error("Failed to fetch image via proxy");
+
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `avatar-${mail || "user"}.png`;
+      link.download = filename;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error("Error downloading image:", error);
-      toast.error("Error downloading image. Please try again.");
+      toast.error("Error downloading image. Opening in new tab instead.");
+      window.open(existingImageUrl, "_blank", "noopener,noreferrer");
     }
   };
 
@@ -421,7 +423,7 @@ export function AiModalPop({ showFloatingIcon = true,showFloatingform = true }: 
     <>
       <Toaster position="top-center" reverseOrder={false} />
 
-      {/* Phone & OTP Modal - Fully Responsive */}
+      {/* Email & OTP Modal - Fully Responsive */}
       <Dialog open={showPhoneModal} onOpenChange={handleClosePhoneModal}>
         <DialogContent className="w-[95vw] sm:w-[90vw] md:w-[600px] lg:w-[700px] max-w-[700px] h-auto max-h-[90vh] md:h-[372px] p-0 overflow-hidden rounded-xl [&>button]:text-white">
           <VisuallyHidden>
@@ -441,19 +443,19 @@ export function AiModalPop({ showFloatingIcon = true,showFloatingform = true }: 
                 <>
                   <div className="space-y-3 w-full">
                     <p style={{ fontFamily: 'Calsans, sans-serif' }} className="text-xs sm:text-sm font-medium text-gray-700 block">
-                      Your email helps us verify your registration status and ensure a smooth experience.
-Once verified, we’ll direct you to the right step—whether it’s registration ,AI image generation or for downloading created assets
+                      Your email address helps us verify your registration status and ensure a smooth experience.
+                      Once verified, we’ll direct you to the right step—whether it’s registration, AI image generation, or downloading created assets.
                     </p>
                     <label className="text-xs sm:text-sm font-medium text-gray-700 block">
                       Email Address
                     </label>
-                    <div className="flex flex-col gap-2">
+                    <div className="flex gap-2">
                       <input
                         type="email"
                         placeholder="Enter Email Address"
                         value={mail}
                         onChange={(e) => setMail(e.target.value)}
-                        className="w-full px-3 py-2 sm:py-2.5 text-sm sm:text-base border-2 rounded-lg focus:ring-2 outline-none"
+                        className="flex-1 px-3 py-2 sm:py-2.5 text-sm sm:text-base border-2 rounded-lg focus:ring-2 outline-none"
                       />
                     </div>
                     <button
@@ -517,7 +519,7 @@ Once verified, we’ll direct you to the right step—whether it’s registratio
                     }}
                     className="w-full px-4 py-2 sm:py-2.5 text-sm sm:text-base rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 transition"
                   >
-                    Change Mail Address
+                    Change Email
                   </button>
                 </>
               )}

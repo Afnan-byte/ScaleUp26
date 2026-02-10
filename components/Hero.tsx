@@ -3,9 +3,11 @@ import { ChevronRight } from "lucide-react";
 import React, { useEffect, useState } from "react";
 
 import Registration from "./Registration";
+import AiModalPop from "./AiModalPop";
 
 function Hero() {
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
+  const [showPhoneModal, setShowPhoneModal] = useState(true);
   useEffect(() => {
     const handler = () => setIsRegisterModalOpen(true);
     window.addEventListener(
@@ -244,6 +246,13 @@ function Hero() {
         isOpen={isRegisterModalOpen}
         onClose={() => setIsRegisterModalOpen(false)}
       />
+      {showPhoneModal && (
+        <AiModalPop
+          showFloatingIcon={true}
+          showFloatingform={true}
+          onOpenRegistration={() => setIsRegisterModalOpen(true)}
+        />
+      )}
     </section>
   );
 }
