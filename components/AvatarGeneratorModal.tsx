@@ -316,6 +316,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
       const apiFormData = new FormData();
       apiFormData.append("name", formData.name);
       apiFormData.append("email", formData.email);
+      apiFormData.append("phone_no", "0000000000");
       apiFormData.append("district", formData.district);
       apiFormData.append("category", formData.category);
       apiFormData.append("organization", formData.organization);

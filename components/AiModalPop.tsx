@@ -253,6 +253,7 @@ export function AiModalPop({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             email: mail,
+            phone_no: "0000000000",
           }),
         });
 
@@ -309,6 +310,7 @@ export function AiModalPop({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             email: mail,
+            phone_no: "0000000000",
             otp,
           }),
         },
