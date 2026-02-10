@@ -131,7 +131,6 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
       setFormData({
         name: registrationData.name,
         email: registrationData.email,
-        phone_no: registrationData.phone_no,
         district: registrationData.district,
         category: registrationData.category,
         organization: registrationData.organization,
