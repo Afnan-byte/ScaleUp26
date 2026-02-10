@@ -38,28 +38,28 @@ const generationOptions: {
   icon: any;
   previewImg: string;
 }[] = [
-    {
-      id: "superhero",
-      title: "Superhero",
-      subtitle: "Turns you into a superhero",
-      icon: Shield,
-      previewImg: "/superhero.png",
-    },
-    {
-      id: "professional",
-      title: "Professional",
-      subtitle: "A well curated professional shot",
-      icon: Briefcase,
-      previewImg: "/professional.png",
-    },
-    {
-      id: "medieval",
-      title: "Medieval Warrior",
-      subtitle: "An ancient fierce warrior",
-      icon: Sword,
-      previewImg: "/medieval.png",
-    },
-  ];
+  {
+    id: "superhero",
+    title: "Superhero",
+    subtitle: "Turns you into a superhero",
+    icon: Shield,
+    previewImg: "/superhero.png",
+  },
+  {
+    id: "professional",
+    title: "Professional",
+    subtitle: "A well curated professional shot",
+    icon: Briefcase,
+    previewImg: "/professional.png",
+  },
+  {
+    id: "medieval",
+    title: "Medieval Warrior",
+    subtitle: "An ancient fierce warrior",
+    icon: Sword,
+    previewImg: "/medieval.png",
+  },
+];
 
 const loadingForegroundImages = [
   "/assets/images/1_eng.png",
@@ -70,7 +70,6 @@ const loadingForegroundImages = [
   "/assets/images/3_mal.png",
 ];
 
-// ADD THIS ARRAY - This was missing in your code
 const loadingMessages = [
   "Creating your unique avatar...",
   "Adding magical touches...",
@@ -84,11 +83,9 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
   onClose,
   registrationData,
 }) => {
-  // ✅ Hook at top level (never move this)
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [previewType, setPreviewType] = useState<GenerationType>("superhero");
-  const [generationType, setGenerationType] =
-    useState<GenerationType>("superhero");
+  const [generationType, setGenerationType] = useState<GenerationType>("superhero");
   const [isGenerating, setIsGenerating] = useState(false);
   const [isGenerated, setIsGenerated] = useState(false);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
@@ -98,17 +95,15 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
   const [countdown, setCountdown] = useState(90);
   const [fgIndex, setFgIndex] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
+
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 1024);
     };
-
-    checkMobile(); // initial
+    checkMobile();
     window.addEventListener("resize", checkMobile);
-
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
-
 
   const [formData, setFormData] = useState({
     name: registrationData?.name || "",
@@ -121,11 +116,9 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
 
   useEffect(() => {
     if (!isGenerating) return;
-
     const interval = setInterval(() => {
       setFgIndex((prev) => (prev + 1) % loadingForegroundImages.length);
-    }, 10000); // 10 seconds
-
+    }, 10000);
     return () => clearInterval(interval);
   }, [isGenerating]);
 
@@ -194,6 +187,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
   useEffect(() => {
     if (!generatedImageUrl || !formData.phone_no) return;
     if (typeof window === "undefined") return;
+
     try {
       localStorage.setItem(
         `scaleup2026:final_image_url:${formData.phone_no}`,
@@ -205,7 +199,11 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
   }, [generatedImageUrl, formData.phone_no]);
 
   const getPromptType = (type: GenerationType): string => {
-    const mapping = { superhero: "prompt1", professional: "prompt2", medieval: "prompt3" };
+    const mapping = {
+      superhero: "prompt1",
+      professional: "prompt2",
+      medieval: "prompt3"
+    };
     return mapping[type];
   };
 
@@ -233,7 +231,10 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
 
   const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
   const extractFinalImageUrl = (payload: any): string => {
@@ -271,7 +272,9 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
     try {
       const res = await fetch("/api/send-mail", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json"
+        },
         body: JSON.stringify({
           to: formData.email,
           subject: "ScaleUp Conclave 2026 - Your AI Avatar",
@@ -310,7 +313,6 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
       for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
         try {
           const response = await fetch(`https://scaleup.frameforge.one/scaleup2026/user/${userId}`);
-
           let result;
           try {
             const text = await response.text();
@@ -328,7 +330,6 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
 
         await new Promise((resolve) => setTimeout(resolve, delayMs));
       }
-
       return "";
     };
 
@@ -387,7 +388,6 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
       }
 
       const finalImageUrl = extractFinalImageUrl(result);
-
       if (finalImageUrl) {
         setGeneratedImageUrl(finalImageUrl);
         setIsGenerated(true);
@@ -427,6 +427,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
         const text = await response.text();
         const result = text ? JSON.parse(text) : {};
         const fetchedUrl = extractFinalImageUrl(result);
+
         if (response.ok && fetchedUrl) {
           imageUrl = fetchedUrl;
           setGeneratedImageUrl(fetchedUrl);
@@ -440,6 +441,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
 
     try {
       window.open(imageUrl, "_blank", "noopener,noreferrer");
+
       const response = await fetch(imageUrl);
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
@@ -468,75 +470,59 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
   };
 
   if (!isOpen) return null;
+
   const handleOpenWithWarning = () => {
-    // Prevent multiple modals
     if (document.getElementById("upload-warning-modal")) return;
 
-    const modalHTML = `
-      <div id="upload-warning-modal"
-        style="
-          position: fixed;
-          inset: 0;
-          background: rgba(0,0,0,0.5);
-          z-index: 9999;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 16px;
-        "
-      >
-        <div
-          style="
-            background: white;
-            padding: 24px;
-            width: 100%;
-            max-width: 400px;
-            border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            font-family: sans-serif;
-          "
-        >
-          <h3 style="font-size: 18px; font-weight: 600; margin-bottom: 8px;">
-            Upload Warning
-          </h3>
-
-          <p style="font-size: 14px; color: #555; margin-bottom: 20px;">
-            Before you continue:
-This AI generation can be used only once. Make sure your photo is bright, clear, and shows your face fully. For best results, a professionally taken photo is recommended. A good photo = a great result 
-          </p>
-
-          <div style="display: flex; justify-content: flex-end; gap: 12px;">
-            <button
-              id="warning-cancel"
-              style="
-                padding: 8px 14px;
-                border-radius: 6px;
-                border: 1px solid #ccc;
-                background: #fff;
-                cursor: pointer;
-              "
-            >
-              Cancel
-            </button>
-
-            <button
-              id="warning-ok"
-              style="
-                padding: 8px 14px;
-                border-radius: 6px;
-                border: none;
-                background: #000;
-                color: #fff;
-                font-weight: 600;
-                cursor: pointer;
-              "
-            >
-              OK, Continue
-            </button>
-          </div>
+    const modalHTML = `<div id="upload-warning-modal" style="
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    ">
+      <div style="
+        background: white;
+        padding: 24px;
+        width: 100%;
+        max-width: 400px;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        font-family: sans-serif;
+      ">
+        <h3 style="font-size: 18px; font-weight: 600; margin-bottom: 8px;">
+          Upload Warning
+        </h3>
+        <p style="font-size: 14px; color: #555; margin-bottom: 20px;">
+          Before you continue: This AI generation can be used only once. Make sure your photo is bright, clear, and shows your face fully. For best results, a professionally taken photo is recommended. A good photo = a great result
+        </p>
+        <div style="display: flex; justify-content: flex-end; gap: 12px;">
+          <button id="warning-cancel" style="
+            padding: 8px 14px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            background: #fff;
+            cursor: pointer;
+          ">
+            Cancel
+          </button>
+          <button id="warning-ok" style="
+            padding: 8px 14px;
+            border-radius: 6px;
+            border: none;
+            background: #000;
+            color: #fff;
+            font-weight: 600;
+            cursor: pointer;
+          ">
+            OK, Continue
+          </button>
         </div>
       </div>
-    `;
+    </div>`;
 
     document.body.insertAdjacentHTML("beforeend", modalHTML);
 
@@ -548,7 +534,7 @@ This AI generation can be used only once. Make sure your photo is bright, clear,
 
     okBtn.onclick = () => {
       modal.remove();
-      fileInputRef.current?.click(); // ✅ safe
+      fileInputRef.current?.click();
     };
 
     cancelBtn.onclick = () => {
@@ -556,45 +542,60 @@ This AI generation can be used only once. Make sure your photo is bright, clear,
     };
   };
 
-
   return (
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
-          onClick={handleClose}
+          className={cn(
+            "fixed inset-0 z-50 flex items-center justify-center p-4",
+            isMobile && "static inset-auto p-0"
+          )}
+          onClick={!isMobile ? handleClose : undefined}
         >
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             onClick={(e) => e.stopPropagation()}
-            className="relative w-full max-w-5xl max-h-[95vh] bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row"
+            className={cn(
+              "relative w-full bg-white shadow-2xl overflow-y-auto flex flex-col-reverse md:flex-row",
+              isMobile ? "min-h-screen" : "max-w-5xl max-h-[95vh] rounded-3xl md:overflow-hidden"
+            )}
           >
-            {/* Close Button */}
-            <button
-              onClick={handleClose}
-              className="absolute top-6 right-6 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition"
-            >
-              <X className="h-5 w-5 text-gray-900" />
-            </button>
+            {/* Close button - positioned differently for mobile */}
+            {!isMobile && (
+              <button
+                onClick={handleClose}
+                className="absolute top-4 right-4 z-50 p-2 rounded-full bg-white/10 backdrop-blur-sm hover:bg-white/20 transition"
+              >
+                <X className="w-6 h-6 text-white" />
+              </button>
+            )}
+
+            {isMobile && (
+              <button
+                onClick={handleClose}
+                className="fixed top-4 right-4 z-50 p-2 rounded-full bg-gray-900 text-white shadow-lg hover:bg-gray-800 transition"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            )}
 
             {/* LEFT SIDE - Form */}
-
             {!(isGenerating && isMobile) && (
-
               <div
                 className={cn(
-                  "w-full lg:w-1/2 p-6 sm:p-8 lg:p-12 overflow-y-auto bg-white transition-all duration-300",
+                  "w-full lg:w-1/2 p-6 sm:p-8 lg:p-12 bg-white transition-all duration-300 md:overflow-y-auto",
                   isGenerating && "pointer-events-none blur-sm lg:blur-0 lg:pointer-events-auto"
                 )}
               >
                 <AnimatePresence mode="wait">
                   {!isGenerated ? (
-                    <motion.div key="form" initial={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                    <motion.div
+                      key="form"
+                      initial={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                    >
                       <h1
                         className="text-3xl lg:text-4xl font-normal text-gray-900 mb-2"
                         style={{ fontFamily: 'Calsans, sans-serif' }}
@@ -658,7 +659,6 @@ This AI generation can be used only once. Make sure your photo is bright, clear,
                           <label className="block text-sm font-semibold text-gray-900 mb-1.5">
                             Upload Photo
                           </label>
-
                           <div className="relative">
                             <input
                               ref={fileInputRef}
@@ -667,7 +667,6 @@ This AI generation can be used only once. Make sure your photo is bright, clear,
                               onChange={handleFileChange}
                               className="hidden"
                             />
-
                             <div
                               onClick={handleOpenWithWarning}
                               className="flex items-center justify-between w-full h-11 px-4 rounded-lg border border-gray-300 cursor-pointer hover:border-gray-400 transition bg-white"
@@ -679,8 +678,6 @@ This AI generation can be used only once. Make sure your photo is bright, clear,
                                     : photoFile.name
                                   : "Select Image File"}
                               </span>
-
-
                               <button
                                 type="button"
                                 className="bg-black text-white px-4 py-1.5 rounded-md text-sm font-semibold"
@@ -701,7 +698,11 @@ This AI generation can be used only once. Make sure your photo is bright, clear,
                       </div>
                     </motion.div>
                   ) : (
-                    <motion.div key="success" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                    <motion.div
+                      key="success"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                    >
                       <h1
                         className="text-3xl lg:text-4xl font-bold text-gray-900 mb-2 pt-2"
                         style={{ fontFamily: 'Calsans, sans-serif' }}
@@ -711,6 +712,7 @@ This AI generation can be used only once. Make sure your photo is bright, clear,
                       <p className="text-sm text-gray-600 mb-6">
                         Great news! Your AI Avatar has been sent to your email and WhatsApp. Feel free to share with your friends and on social networks.
                       </p>
+
                       <button
                         onClick={handleDownload}
                         className="w-full h-11 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition flex items-center justify-center gap-2"
@@ -722,28 +724,17 @@ This AI generation can be used only once. Make sure your photo is bright, clear,
                   )}
                 </AnimatePresence>
               </div>
-
             )}
-
 
             {/* RIGHT SIDE - Image Preview */}
             <div
               className={cn(
-                "bg-gray-900 relative flex-col",
-
-                // Desktop: always right panel
-                "hidden md:flex lg:w-1/2 lg:p-6",
-
-                // Mobile overlay (only when generating / generated)
-                (isGenerating || isGenerated)
-                  ? "fixed inset-0 z-[999] flex w-full h-full p-4 lg:static lg:z-auto"
-                  : "hidden"
+                "relative flex-col bg-gray-900",
+                "flex w-full p-4 md:p-0 md:w-1/2 md:static md:z-auto",
+                "md:flex lg:p-6",
+                (isGenerating || isGenerated) && "fixed inset-0 z-[999] w-full h-full p-4 md:static md:z-auto"
               )}
             >
-
-
-
-              {/* Type Selection Tabs - Header */}
               {/* Type Selection Tabs - Header */}
               {!isGenerated && !isGenerating && (
                 <div className="mb-6">
@@ -792,7 +783,6 @@ This AI generation can be used only once. Make sure your photo is bright, clear,
                       />
                       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
 
-
                       {/* Foreground Fade Image */}
                       <AnimatePresence mode="wait">
                         <motion.img
@@ -803,25 +793,12 @@ This AI generation can be used only once. Make sure your photo is bright, clear,
                           exit={{ opacity: 0, scale: 1.05 }}
                           transition={{ duration: 0.6, ease: "easeOut" }}
                           className="
-  absolute
-  left-1/2
-  top-1/2
-  -translate-x-1/2
-  -translate-y-1/2
-  z-10
-  max-h-[85%]
-  max-w-[90%]
-  lg:max-h-[75%]
-  lg:max-w-[80%]
-  object-contain
-  rounded-2xl
-  shadow-2xl
-"
-
+                            absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2
+                            z-10 max-h-[85%] max-w-[90%] lg:max-h-[75%] lg:max-w-[80%]
+                            object-contain rounded-2xl shadow-2xl
+                          "
                         />
                       </AnimatePresence>
-
-
 
                       {/* Countdown */}
                       <div className="absolute bottom-8 z-20 text-center text-white">
@@ -839,22 +816,27 @@ This AI generation can be used only once. Make sure your photo is bright, clear,
                       initial={{ opacity: 0, scale: 0.95 }}
                       animate={{ opacity: 1, scale: 1 }}
                       exit={{ opacity: 0, scale: 0.95 }}
-                      className="w-full h-full flex items-center justify-center px-6 pb-16"
+                      className="w-full h-full flex flex-col items-center justify-center px-6 pb-16"
                     >
                       <img
                         src={isGenerated ? generatedImageUrl : activeOption.previewImg}
                         alt="Avatar preview"
-                        className="
-            max-h-[75vh]
-            max-w-full
-            object-contain
-            rounded-2xl
-            shadow-2xl
-          "
+                        className="max-h-[75vh] max-w-full object-contain rounded-2xl shadow-2xl"
                         onError={(e) => {
                           e.currentTarget.src = activeOption.previewImg;
                         }}
                       />
+
+                      {/* Mobile Download Button */}
+                      {isGenerated && isMobile && (
+                        <button
+                          onClick={handleDownload}
+                          className="mt-6 w-full max-w-xs h-11 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition flex items-center justify-center gap-2"
+                        >
+                          <Download className="h-4 w-4" />
+                          Download AI Avatar
+                        </button>
+                      )}
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -864,9 +846,7 @@ This AI generation can be used only once. Make sure your photo is bright, clear,
                   Created using FrameForge.one
                 </div>
               </div>
-
             </div>
-
           </motion.div>
         </motion.div>
       )}

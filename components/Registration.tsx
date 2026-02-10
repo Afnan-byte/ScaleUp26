@@ -23,12 +23,12 @@ type FormFields = {
   previousAttendance: string;
 };
 
-type TicketStep = "form" | "ticket" | "success";
+type TicketStep = "form" | "ticket" | "success" | "avatar";
 type TicketType = "general" | "vip";
 
 interface TicketTypeModalProps {
   onClose: () => void;
-  setStep: React.Dispatch<React.SetStateAction<"form" | "ticket" | "success">>;
+  setStep: React.Dispatch<React.SetStateAction<TicketStep>>;
   handleRegister: () => void;
   selectedTicket: TicketType | null;
   setSelectedTicket: React.Dispatch<React.SetStateAction<TicketType | null>>;
@@ -52,16 +52,14 @@ export default function RegistrationModal({
   });
 
   const [focusedField, setFocusedField] = useState<string | null>(null);
-  const [step, setStep] = useState<"form" | "ticket" | "success">("form");
+  const [step, setStep] = useState<TicketStep>("form");
   const [ticketID, setTicketID] = useState("");
   const [loading, setLoading] = useState(false);
   const [registerStatus, setRegisterStatus] = useState<
     "idle" | "submitting" | "submitted"
   >("idle");
   const [selectedTicket, setSelectedTicket] = useState<TicketType | null>(null);
-  const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
   const [showPhoneModal, setShowPhoneModal] = useState(false);
-  
 
   useEffect(() => {
     if (isOpen) {
@@ -72,29 +70,26 @@ export default function RegistrationModal({
       window.dispatchEvent(new CustomEvent("registration-modal-closed"));
       setRegisterStatus("idle");
     }
+
     return () => {
       document.body.style.overflow = "";
     };
   }, [isOpen]);
 
-  useEffect(() => {
-    if (isAvatarModalOpen) {
-      window.dispatchEvent(new CustomEvent("avatar-modal-opened"));
-    } else {
-      window.dispatchEvent(new CustomEvent("avatar-modal-closed"));
-    }
-  }, [isAvatarModalOpen]);
-
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log("Form submitted:", formData);
+
     const url =
       "https://api.makemypass.com/makemypass/public-form/f9290cc6-d840-4492-aefb-76f189df5f5e/validate-rsvp/";
     const formData1 = new FormData();
@@ -104,14 +99,20 @@ export default function RegistrationModal({
     formData1.append("district", formData.district);
     formData1.append("organization", formData.organization);
     formData1.append("category", formData.category);
-    formData1.append("did_you_attend_the_previous_scaleup_conclave_", formData.previousAttendance);
+    formData1.append(
+      "did_you_attend_the_previous_scaleup_conclave_",
+      formData.previousAttendance
+    );
+
     try {
       const response = await fetch(url, {
         method: "POST",
         body: formData1,
       });
+
       const result = await response.json();
       console.log("Validation result:", result);
+
       if (result.statusCode === 400) {
         result.message?.email && toast.error(result.message?.email);
         result.message?.phone && toast.error(result.message?.phone);
@@ -120,6 +121,7 @@ export default function RegistrationModal({
     } catch (error) {
       console.error("API Error:", error);
     }
+
     setStep("ticket");
   };
 
@@ -141,23 +143,24 @@ export default function RegistrationModal({
             "https://api.makemypass.com/makemypass/public-form/validate-payment/",
             {
               method: "POST",
-              headers: { "Content-Type": "application/json" },
+              headers: {
+                "Content-Type": "application/json",
+              },
               body: JSON.stringify({
                 order_id: response.razorpay_order_id,
                 payment_id: response.razorpay_payment_id,
                 gateway: "Razorpay",
               }),
-            },
+            }
           );
+
           const verifyResult = await verifyRes.json();
           console.log("Payment verification result:", verifyResult);
+
           if (verifyRes.ok && !verifyResult.hasError) {
             toast.success("Payment successful");
             setTicketID(verifyResult.response.event_register_id);
             setStep("success");
-            // setTimeout(() => {
-            //   setIsAvatarModalOpen(true);
-            // }, 800);
           } else {
             toast.error("Payment verification failed");
           }
@@ -174,6 +177,7 @@ export default function RegistrationModal({
         color: "#3399cc",
       },
     };
+
     const rzp = new window.Razorpay(options);
     rzp.open();
   };
@@ -207,7 +211,7 @@ export default function RegistrationModal({
       payload.append("category", formData.category);
       payload.append(
         "did_you_attend_the_previous_scaleup_conclave_",
-        formData.previousAttendance,
+        formData.previousAttendance
       );
 
       const tickets = [
@@ -232,7 +236,10 @@ export default function RegistrationModal({
       // Call MakeMy Pass API
       const response = await fetch(
         "https://api.makemypass.com/makemypass/public-form/f9290cc6-d840-4492-aefb-76f189df5f5e/submit/",
-        { method: "POST", body: payload },
+        {
+          method: "POST",
+          body: payload,
+        }
       );
 
       const result = await response.json();
@@ -258,7 +265,6 @@ export default function RegistrationModal({
 
       // SUCCESS - Call backend registration API
       console.log("Registration successful, calling backend register API");
-      
       const registerPayload = {
         name: formData.name,
         email: formData.email,
@@ -273,7 +279,9 @@ export default function RegistrationModal({
           "https://scaleup.frameforge.one/scaleup2026/register",
           {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+              "Content-Type": "application/json",
+            },
             body: JSON.stringify(registerPayload),
           }
         );
@@ -299,13 +307,10 @@ export default function RegistrationModal({
       // SUCCESS - Show success and open avatar modal
       toast.success("Registration successful");
       setTicketID(
-        result.response?.event_register_id || "TEST-TICKET-" + Date.now(),
+        result.response?.event_register_id || "TEST-TICKET-" + Date.now()
       );
       setRegisterStatus("submitted");
       setStep("success");
-      // setTimeout(() => {
-      //   setIsAvatarModalOpen(true);
-      // }, 800);
     } catch (error) {
       toast.error("Something went wrong");
       console.error(error);
@@ -329,28 +334,25 @@ export default function RegistrationModal({
   return (
     <>
       {/* Overlay with backdrop blur */}
-      {/* Overlay with backdrop blur */}
       <div
         className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm"
-        onClick={onClose}   // 👈 close when clicking outside
-      >
-              {/* Modal Container - Full screen on mobile, split on desktop */}
-              <div className="fixed inset-0 flex items-center justify-center p-0 md:p-4">
-        <div
-          className="relative w-full h-full md:h-auto md:max-h-[90vh] md:max-w-6xl md:rounded-2xl overflow-hidden bg-white shadow-2xl flex flex-col md:flex-row"
-          onClick={(e) => e.stopPropagation()}   // 👈 prevent outside click close
-        >
-          <button
         onClick={onClose}
-        className="absolute top-4 right-4 z-50 text-gray-600 hover:text-red-600 transition"
       >
-        <X size={26} />
-      </button>
+        {/* Modal Container - Full screen on mobile, split on desktop */}
+        <div className="fixed inset-0 flex items-center justify-center p-0 md:p-4">
+          <div
+            className="relative w-full h-full md:h-auto md:max-h-[90vh] md:max-w-6xl md:rounded-2xl overflow-hidden bg-white shadow-2xl flex flex-col md:flex-row"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={onClose}
+              className="absolute top-4 right-4 z-50 text-gray-600 hover:text-red-600 transition"
+            >
+              <X size={26} />
+            </button>
 
-
-            
             {/* LEFT SIDE - Forms */}
-            <div className="w-full md:w-1/2 overflow-y-auto bg-white">
+            <div className={`w-full overflow-y-auto bg-white ${step === "avatar" ? "" : "md:w-1/2"}`}>
               {step === "form" && (
                 <RegistrationForm
                   formData={formData}
@@ -377,77 +379,79 @@ export default function RegistrationModal({
                 />
               )}
 
-              
-                {step === "success" && (
-                  <SuccessModal
-                    onClose={onClose}
-                    setStep={setStep}
-                    ticketID={ticketID}
-                    onOpenAvatar={() => setIsAvatarModalOpen(true)}
-                  />
-                )}
+              {step === "success" && (
+                <SuccessModal
+                  onClose={onClose}
+                  setStep={setStep}
+                  ticketID={ticketID}
+                />
+              )}
 
-             
+              {step === "avatar" && (
+                <div className="w-full h-full">
+                  <AvatarGeneratorModal
+                    isOpen={true}
+                    onClose={() => {
+                      // When avatar closes, close the entire registration flow
+                      onClose();
+                    }}
+                    registrationData={{
+                      name: formData.name,
+                      email: formData.email,
+                      phone_no: formData.countryCode + formData.phone,
+                      district: formData.district,
+                      category: formData.category,
+                      organization: formData.organization,
+                    }}
+                  />
+                </div>
+              )}
             </div>
 
             {/* RIGHT SIDE - Images/GIF */}
-            <div className="hidden md:block md:w-1/2 relative bg-gray-900">
-              {step === "form" && (
-                <div className="absolute inset-0 flex items-center justify-center p-0">
-                  <img 
-                    src="/assets/images/reg1.png" 
-                    alt="Register"
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      e.currentTarget.style.display = 'none';
-                    }}
-                  />
-                </div>
-              )}
-              
-              {step === "ticket" && (
-                <div className="absolute inset-0 flex items-center justify-center p-0">
-                  <img 
-                    src="/assets/images/reg1.png" 
-                    alt="Choose Ticket"
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      e.currentTarget.style.display = 'none';
-                    }}
-                  />
-                </div>
-              )}
-              
-              {step === "success" && (
-                <div className="absolute inset-0 flex items-center justify-center p-8">
-                  <SuccessRightSide ticketID={ticketID} />
-                </div>
-              )}
-            </div>
+            {step !== "avatar" && (
+              <div className="hidden md:block md:w-1/2 relative bg-gray-900">
+                {step === "form" && (
+                  <div className="absolute inset-0 flex items-center justify-center p-0">
+                    <img
+                      src="/assets/images/reg1.png"
+                      alt="Register"
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                      }}
+                    />
+                  </div>
+                )}
+
+                {step === "ticket" && (
+                  <div className="absolute inset-0 flex items-center justify-center p-0">
+                    <img
+                      src="/assets/images/reg1.png"
+                      alt="Choose Ticket"
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                      }}
+                    />
+                  </div>
+                )}
+
+                {step === "success" && (
+                  <div className="absolute inset-0 flex items-center justify-center p-8">
+                    <SuccessRightSide ticketID={ticketID} />
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Avatar Generator Modal */}
-      <AvatarGeneratorModal
-        isOpen={isAvatarModalOpen}
-        onClose={() => setIsAvatarModalOpen(false)}
-        registrationData={{
-          name: formData.name,
-          email: formData.email,
-          phone_no: formData.countryCode + formData.phone,
-          district: formData.district,
-          category: formData.category,
-          organization: formData.organization,
-        }}
-      />
-
       <Toaster position="top-center" reverseOrder={false} />
       {showPhoneModal && <AiModalPop />}
-
     </>
   );
-  
 }
 
 /* ---------------- Registration Form ---------------- */
@@ -482,15 +486,14 @@ function RegistrationForm({
       >
         Register Now!
       </h1>
-
-      <p className="text-lg md:text-base mb-8 text-gray-500 " >
+      <p className="text-lg md:text-base mb-8 text-gray-500 ">
         Secure your spot and be part of the excitement! Register now to receive your entry pass.
       </p>
 
       <form className="space-y-4" onSubmit={handleSubmit}>
         {/* Name */}
         <div>
-          <label className="block text-sm font-medium text-gray-900 mb-1.5" >
+          <label className="block text-sm font-medium text-gray-900 mb-1.5">
             Name <span className="text-red-500">*</span>
           </label>
           <input
@@ -528,7 +531,7 @@ function RegistrationForm({
 
         {/* Phone */}
         <div>
-          <label className="block text-sm font-medium text-gray-900 mb-1.5" >
+          <label className="block text-sm font-medium text-gray-900 mb-1.5">
             Phone Number <span className="text-red-500">*</span>
           </label>
           <div className="flex gap-2 w-[70%]">
@@ -567,7 +570,7 @@ function RegistrationForm({
 
         {/* District */}
         <div>
-          <label className="block text-sm font-medium text-gray-900 mb-1.5" >
+          <label className="block text-sm font-medium text-gray-900 mb-1.5">
             District <span className="text-red-500">*</span>
           </label>
           <select
@@ -606,7 +609,7 @@ function RegistrationForm({
 
         {/* Category */}
         <div>
-          <label className="block text-sm font-medium text-gray-900 mb-1.5" >
+          <label className="block text-sm font-medium text-gray-900 mb-1.5">
             Category <span className="text-red-500">*</span>
           </label>
           <select
@@ -654,7 +657,6 @@ function RegistrationForm({
             Did you attend the previous ScaleUp Conclave <br />(2025)?{" "}
             <span className="text-red-500">*</span>
           </label>
-
           <select
             name="previousAttendance"
             value={formData.previousAttendance}
@@ -677,7 +679,7 @@ function RegistrationForm({
           <button
             type="submit"
             className="w-[70%] py-3.5 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-all shadow-md"
-            style={{  fontSize: '16px' }}
+            style={{ fontSize: '16px' }}
           >
             Sign in
           </button>
@@ -686,17 +688,22 @@ function RegistrationForm({
         <div className="text-left pb-2">
           <p className="text-sm text-gray-600">
             Already have an account?{' '}
-            <span onClick={()=>{setShowPhoneModal(true)}} className="text-indigo-600 hover:text-indigo-700 cursor-pointer ">
-              Go here
-            </span>
+            <span
+  onClick={() => {
+    onClose(); // close registration modal
+    window.dispatchEvent(new CustomEvent("open-aipop"));
+  }}
+  className="text-indigo-600 hover:text-indigo-700 cursor-pointer"
+>
+  Go here
+</span>
+
           </p>
         </div>
       </form>
     </div>
   );
-
 }
-
 
 /* ---------------- Ticket Selection Modal ---------------- */
 const TicketTypeModal: React.FC<TicketTypeModalProps> = ({
@@ -722,10 +729,13 @@ const TicketTypeModal: React.FC<TicketTypeModalProps> = ({
       </div>
 
       <div className="mb-8">
-        <h2 className="text-3xl md:text-4xl font-normal text-gray-900 mb-2" style={{ fontFamily: 'Calsans, sans-serif' }}>
+        <h2
+          className="text-3xl md:text-4xl font-normal text-gray-900 mb-2"
+          style={{ fontFamily: 'Calsans, sans-serif' }}
+        >
           Choose your ticket type
         </h2>
-        <p className="text-sm md:text-base text-gray-500" >
+        <p className="text-sm md:text-base text-gray-500">
           Both types will have different levels of access
         </p>
       </div>
@@ -734,25 +744,20 @@ const TicketTypeModal: React.FC<TicketTypeModalProps> = ({
         {/* General Pass Card */}
         <div
           onClick={() => handleSelect("general")}
-          className={`
-            group cursor-pointer transition-all duration-200 rounded-2xl p-5 border-2
-            ${
-              selectedTicket === "general"
-                ? "border-gray-900 shadow-lg"
-                : "border-gray-300 hover:border-gray-400"
-            }
-          `}
+          className={`group cursor-pointer transition-all duration-200 rounded-2xl p-5 border-2 ${
+            selectedTicket === "general"
+              ? "border-gray-900 shadow-lg"
+              : "border-gray-300 hover:border-gray-400"
+          }`}
           style={{ fontFamily: 'Calsans, sans-serif' }}
         >
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-xl font-normal text-gray-900">General Pass</h3>
             <span className="text-xl font-normal text-gray-900">Free</span>
           </div>
-          
-          {/* Ticket Preview Image */}
           <div className="flex justify-center">
-            <img 
-              src="/assets/images/general.png" 
+            <img
+              src="/assets/images/general.png"
               alt="General Pass"
               className="w-full max-w-[280px] h-auto rounded-lg shadow-md"
               onError={(e) => {
@@ -765,25 +770,20 @@ const TicketTypeModal: React.FC<TicketTypeModalProps> = ({
         {/* VIP Pass Card */}
         <div
           onClick={() => handleSelect("vip")}
-          className={`
-            group cursor-pointer transition-all duration-200 rounded-2xl p-5 border-2
-            ${
-              selectedTicket === "vip"
-                ? "border-gray-900 shadow-lg"
-                : "border-gray-300 hover:border-gray-400"
-            }
-          `}
+          className={`group cursor-pointer transition-all duration-200 rounded-2xl p-5 border-2 ${
+            selectedTicket === "vip"
+              ? "border-gray-900 shadow-lg"
+              : "border-gray-300 hover:border-gray-400"
+          }`}
           style={{ fontFamily: 'Calsans, sans-serif' }}
         >
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-xl font-normal text-gray-900">Vip Pass</h3>
             <span className="text-xl font-normal text-gray-900">₹10,000</span>
           </div>
-          
-          {/* Ticket Preview Image */}
           <div className="flex justify-center">
-            <img 
-              src="/assets/images/vip.png" 
+            <img
+              src="/assets/images/vip.png"
               alt="VIP Pass"
               className="w-full max-w-[280px] h-auto rounded-lg shadow-md"
               onError={(e) => {
@@ -799,7 +799,7 @@ const TicketTypeModal: React.FC<TicketTypeModalProps> = ({
           onClick={handleRegister}
           disabled={loading || !selectedTicket || registerStatus === "submitted"}
           className="w-full py-4 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-          style={{  fontSize: '16px' }}
+          style={{ fontSize: '16px' }}
         >
           {loading ? "Processing..." : registerStatus === "submitted" ? "Submitted" : "Continue"}
         </button>
@@ -810,75 +810,44 @@ const TicketTypeModal: React.FC<TicketTypeModalProps> = ({
 
 /* ---------------- Success Right Side Component ---------------- */
 function SuccessRightSide({ ticketID }: { ticketID: string }) {
-  const [guestData, setGuestData] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchGuestData = async () => {
-      try {
-        const response = await fetch(
-          `https://api.makemypass.com/makemypass/manage-guest/f9290cc6-d840-4492-aefb-76f189df5f5e/guest/${ticketID}/`,
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-            },
-          }
-        );
-        
-        if (response.ok) {
-          const data = await response.json();
-          console.log("Guest data for right side:", data);
-          setGuestData(data);
-        }
-      } catch (error) {
-        console.error("Error fetching guest data:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (ticketID) {
-      fetchGuestData();
-    }
-  }, [ticketID]);
-
-  const userName = guestData?.name || "Your Name";
-  const userOrg = guestData?.organization || "Your company";
-
   return (
-    <div className="relative w-full h-full flex flex-col items-center justify-center">
-      {/* Header Logo */}
-     
+    <div className="relative w-full h-full overflow-hidden">
+      {/* Full-cover Background */}
+      <div
+        className="absolute inset-0 bg-no-repeat bg-center bg-cover scale-105"
+        style={{
+          backgroundImage: "url('/assets/images/base.png')",
+        }}
+      />
+      {/* Dark overlay for contrast */}
+      <div className="absolute inset-0 bg-black/30" />
 
-      {/* Main GIF/Animation Area */}
-      <div className="relative z-10 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden">
-  
-  {/* Background image */}
-  <div
-    className="absolute inset-0 bg-cover bg-center scale-110"
-    style={{
-      backgroundImage: "url('/assets/images/base.png')",
-    }}
-  />
+      {/* Foreground Content */}
+      <div className="relative z-10 flex flex-col items-center justify-between w-full h-full px-6 py-10 pb-20">
+        {/* Top Heading Image */}
+        <div className="pt-6 md:pt-0">
+          <img
+            src="/assets/images/title.png"
+            alt="Title"
+            className="w-[200px] md:w-[260px] lg:w-[300px] object-contain drop-shadow-2xl"
+            onError={(e) => {
+              e.currentTarget.style.display = "none";
+            }}
+          />
+        </div>
 
-  {/* Soft overlay */}
-  <div className="absolute inset-0 bg-black/30"></div>
-
-  {/* Foreground image */}
-  <img 
-    src="/assets/images/right.png" 
-    alt="Success Animation"
-    className="relative z-10 w-full h-auto rounded-2xl"
-    onError={(e) => {
-      e.currentTarget.src = "/assets/images/reg3.png";
-    }}
-  />
-</div>
-
-
-      {/* Bottom Branding */}
-      
+        {/* Center GIF / Avatar */}
+        <div className="flex-1 flex items-center justify-center ">
+          <img
+            src="/assets/images/avatar.gif"
+            alt="Avatar"
+            className="w-[220px] md:w-[320px] lg:w-[460px] object-contain rounded-2xl shadow-2xl"
+            onError={(e) => {
+              e.currentTarget.src = "/assets/images/avatar.png";
+            }}
+          />
+        </div>
+      </div>
     </div>
   );
 }
@@ -888,14 +857,11 @@ function SuccessModal({
   onClose,
   setStep,
   ticketID,
-  onOpenAvatar,
 }: {
   onClose: () => void;
-  setStep: React.Dispatch<React.SetStateAction<"form" | "ticket" | "success">>;
+  setStep: React.Dispatch<React.SetStateAction<"form" | "ticket" | "success" | "avatar">>;
   ticketID: string;
-  onOpenAvatar: (open: boolean) => void;
 }) {
-
   const [guestData, setGuestData] = useState<any>(null);
   const [ticketImageUrl, setTicketImageUrl] = useState<string>("");
   const [loading, setLoading] = useState(true);
@@ -903,7 +869,6 @@ function SuccessModal({
   useEffect(() => {
     const fetchGuestData = async () => {
       try {
-        // Fetch guest data 
         const response = await fetch(
           `https://api.makemypass.com/makemypass/manage-guest/f9290cc6-d840-4492-aefb-76f189df5f5e/guest/${ticketID}/download-ticket/`,
           {
@@ -913,7 +878,7 @@ function SuccessModal({
             },
           }
         );
-        
+
         if (response.ok) {
           const data = await response.json();
           console.log("Guest data:", data);
@@ -928,7 +893,6 @@ function SuccessModal({
 
     const fetchTicketImage = async () => {
       try {
-        // Fetch ticket image/download response
         const ticketResponse = await fetch(
           `https://api.makemypass.com/makemypass/manage-guest/f9290cc6-d840-4492-aefb-76f189df5f5e/guest/${ticketID}/download-ticket/`,
           {
@@ -938,26 +902,23 @@ function SuccessModal({
             },
           }
         );
-        
+
         if (ticketResponse.ok) {
           const ticketData = await ticketResponse.json();
           console.log("Ticket download response:", ticketData);
-          
-          // Extract image URL from response
-          // The API might return: { response: "https://..." } or { image_url: "https://..." }
+
           const imageUrl =
-  ticketData?.response?.image ||
-  ticketData?.image ||
-  ticketData?.image_url ||
-  ticketData?.ticket_url;
+            ticketData?.response?.image ||
+            ticketData?.image ||
+            ticketData?.image_url ||
+            ticketData?.ticket_url;
 
-if (imageUrl) {
-  console.log("Ticket image URL:", imageUrl);
-  setTicketImageUrl(imageUrl);
-} else {
-  console.error("No image URL found in response:", ticketData);
-}
-
+          if (imageUrl) {
+            console.log("Ticket image URL:", imageUrl);
+            setTicketImageUrl(imageUrl);
+          } else {
+            console.error("No image URL found in response:", ticketData);
+          }
         } else {
           console.error("Failed to fetch ticket image, status:", ticketResponse.status);
         }
@@ -980,12 +941,15 @@ if (imageUrl) {
   const ticketCode = guestData?.id || ticketID;
 
   return (
-<div className="p-8 md:p-10 lg:p-12 pt-12 md:pt-8 lg:pt-24 lg:mt-10 lg:pb-12  relative h-full bg-white flex flex-col justify-center">
+    <div className="p-8 md:p-10 lg:p-12 pt-12 md:pt-8 lg:pt-24 lg:mt-10 lg:pb-12 relative h-full bg-white flex flex-col justify-center">
       <div className="max-w-lg">
-        <h1 className="text-4xl md:text-5xl font-normal text-gray-900 mb-4" style={{ fontFamily: 'Calsans, sans-serif' }}>
+        <h1
+          className="text-4xl md:text-5xl font-normal text-gray-900 mb-4"
+          style={{ fontFamily: 'Calsans, sans-serif' }}
+        >
           Congrats your ticket has been generated
         </h1>
-        
+
         {loading ? (
           <div className="flex items-center gap-2 mb-8">
             <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-indigo-600"></div>
@@ -994,9 +958,7 @@ if (imageUrl) {
         ) : (
           <p className="text-base text-gray-600 mb-8">
             Great news! Your ticket has been sent to your email:{" "}
-           
-            and WhatsApp
-            along with the invoice. Please check them to confirm.
+            and WhatsApp along with the invoice. Please check them to confirm.
           </p>
         )}
 
@@ -1011,7 +973,7 @@ if (imageUrl) {
             </div>
           ) : ticketImageUrl ? (
             <div className="rounded-xl overflow-hidden shadow-lg">
-              <img 
+              <img
                 src={ticketImageUrl}
                 alt="Your Event Ticket"
                 className="w-full h-auto object-contain"
@@ -1020,11 +982,9 @@ if (imageUrl) {
                   e.currentTarget.style.display = 'none';
                   const parent = e.currentTarget.parentElement;
                   if (parent) {
-                    parent.innerHTML = `
-                      <div class="bg-gray-200 rounded-xl h-64 flex items-center justify-center">
-                        <p class="text-gray-600 text-sm">Ticket image unavailable. Check your email for the ticket.</p>
-                      </div>
-                    `;
+                    parent.innerHTML = `<div class="bg-gray-200 rounded-xl h-64 flex items-center justify-center">
+                      <p class="text-gray-600 text-sm">Ticket image unavailable. Check your email for the ticket.</p>
+                    </div>`;
                   }
                 }}
               />
@@ -1039,7 +999,7 @@ if (imageUrl) {
           )}
         </div>
 
-        {/* Download Ticket Button (Optional) */}
+        {/* Download Ticket Button */}
         {ticketImageUrl && !loading && (
           <a
             href={ticketImageUrl}
@@ -1057,17 +1017,13 @@ if (imageUrl) {
         )}
 
         {/* Next Step Button */}
-       <button
-  onClick={() => {
-    // onClose();          // close registration modal
-    onOpenAvatar(true);    // open avatar modal
-  }}
-  disabled={loading}
-  className="w-full py-4 mb-10 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
->
-  {loading ? "Loading..." : "Next Step : Generate your AI Avatar"}
-</button>
-
+        <button
+          onClick={() => setStep("avatar")}
+          disabled={loading}
+          className="w-full py-4 mb-10 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {loading ? "Loading..." : "Next Step : Generate your AI Avatar"}
+        </button>
       </div>
     </div>
   );
