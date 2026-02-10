@@ -99,18 +99,6 @@ export function AiModalPop({ showFloatingIcon = true,showFloatingform = true }: 
 
     return () => clearInterval(interval);
   }, [otpSent, timeLeft]);
-  useEffect(() => {
-  const openAiPop = () => {
-    setShowPhoneModal(true); // this opens the OTP / phone modal
-  };
-
-  window.addEventListener("open-aipop", openAiPop as EventListener);
-
-  return () => {
-    window.removeEventListener("open-aipop", openAiPop as EventListener);
-  };
-}, []);
-
 
   useEffect(() => {
     const handleRegistrationOpen = () => setIsExternalModalOpen(true);
@@ -163,17 +151,6 @@ export function AiModalPop({ showFloatingIcon = true,showFloatingform = true }: 
       );
     };
   }, []);
-
-  const emailToPhoneIdent = (emailStr: string) => {
-    if (!emailStr) return "";
-    let hash = 0;
-    for (let i = 0; i < emailStr.length; i++) {
-      hash = (hash << 5) - hash + emailStr.charCodeAt(i);
-      hash = hash & hash;
-    }
-    const absHash = Math.abs(hash).toString();
-    return absHash.slice(0, 10).padStart(10, "0");
-  };
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -237,25 +214,7 @@ export function AiModalPop({ showFloatingIcon = true,showFloatingform = true }: 
       });
 
       if (validateResponse.status === 400) {
-        // User is registered in RSVP - ensure they exist in ScaleUp backend too
-        const phoneIdent = emailToPhoneIdent(mail);
-        try {
-          await fetch("https://scaleup.frameforge.one/scaleup2026/register", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              name: FIXED_VALIDATE_PAYLOAD.name,
-              email: mail,
-              phone_no: phoneIdent,
-              district: FIXED_VALIDATE_PAYLOAD.district,
-              category: FIXED_VALIDATE_PAYLOAD.category,
-              organization: FIXED_VALIDATE_PAYLOAD.organization,
-            }),
-          });
-        } catch (regErr) {
-          console.warn("Silent registration before OTP failed (likely already exists):", regErr);
-        }
-
+        // User already registered
         const storedUrl = getStoredImageUrl(mail);
         if (storedUrl) {
           handleShowExistingImage(storedUrl);
@@ -276,14 +235,12 @@ export function AiModalPop({ showFloatingIcon = true,showFloatingform = true }: 
       }
 
       // 2. Generate OTP from backend
-      const phoneIdent = emailToPhoneIdent(mail);
       const response = await fetch("https://scaleup.frameforge.one/scaleup2026/otp/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          phone_no: phoneIdent,
-          phoneNumber: phoneIdent,
           email: mail,
+          phoneNumber: mail, // Alias
         }),
       });
 
@@ -327,8 +284,8 @@ export function AiModalPop({ showFloatingIcon = true,showFloatingform = true }: 
 
     setLoading(true);
     try {
-      const phoneIdent = emailToPhoneIdent(mail);
-      console.log("Verifying OTP for:", mail, "(Ident:", phoneIdent, ") OTP:", otp);
+      const combined = mail;
+      console.log("Verifying OTP for:", combined, "OTP:", otp);
 
       const response = await fetch(
         "https://scaleup.frameforge.one/scaleup2026/otp/verify",
@@ -336,9 +293,8 @@ export function AiModalPop({ showFloatingIcon = true,showFloatingform = true }: 
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            phone_no: phoneIdent,
-            phoneNumber: phoneIdent,
-            email: mail,
+            email: combined,
+            phoneNumber: combined, // Alias
             otp,
           }),
         },
@@ -356,7 +312,7 @@ export function AiModalPop({ showFloatingIcon = true,showFloatingform = true }: 
           // Store it in localStorage for future use
           if (typeof window !== "undefined") {
             localStorage.setItem(
-              `scaleup2026:final_image_url:${mail}`,
+              `scaleup2026:final_image_url:${combined}`,
               backendImageUrl,
             );
           }
@@ -388,11 +344,10 @@ export function AiModalPop({ showFloatingIcon = true,showFloatingform = true }: 
 
   const handleOpenAvatarGenerator = () => {
     setShowPhoneModal(false);
-    const phoneIdent = emailToPhoneIdent(mail);
     setAvatarRegistrationData({
       name: FIXED_VALIDATE_PAYLOAD.name,
       email: mail,
-      phone_no: phoneIdent, // Use digits for unique record
+      phone_no: FIXED_VALIDATE_PAYLOAD.phone,
       district: FIXED_VALIDATE_PAYLOAD.district,
       category: FIXED_VALIDATE_PAYLOAD.category,
       organization: FIXED_VALIDATE_PAYLOAD.organization,
@@ -434,7 +389,6 @@ export function AiModalPop({ showFloatingIcon = true,showFloatingform = true }: 
     if (!existingImageUrl) return;
 
     try {
-      window.open(existingImageUrl, "_blank", "noopener,noreferrer");
       const response = await fetch(existingImageUrl);
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
