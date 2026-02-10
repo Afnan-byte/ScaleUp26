@@ -198,9 +198,6 @@ const isValidUuid = (value: string) =>
     value
   );
 
-const isValidPhone = (value: string) =>
-  /^\+?\d{10,15}$/.test(value);
-
 export const handleUserProxy = async (request: NextRequest) => {
   if (request.method !== "GET") {
     return NextResponse.json(
@@ -211,13 +208,6 @@ export const handleUserProxy = async (request: NextRequest) => {
 
   const url = new URL(request.url);
   const userId = url.pathname.split("/").pop() || "";
-
-  if (!isValidUuid(userId) && !isValidPhone(userId)) {
-    return NextResponse.json(
-      { error: "Invalid user ID or phone number format" },
-      { status: 400 }
-    );
-  }
 
   const baseUrl = getBaseUrl();
   if (!baseUrl) {

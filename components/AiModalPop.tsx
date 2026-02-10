@@ -10,14 +10,6 @@ import {
 } from "@/components/ui/dialog";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { toast, Toaster } from "react-hot-toast";
-import { allCountries } from "country-telephone-data";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import AvatarGeneratorModal from "@/components/AvatarGeneratorModal";
 
 interface AvatarRegistrationData {
@@ -34,7 +26,7 @@ const MAKEMYPASS_VALIDATE_URL =
 
 const FIXED_VALIDATE_PAYLOAD = {
   name: "John Doe",
-  email: "john@example.com",
+  phone: "+917736526607",
   district: "Kannur",
   category: "Students",
   organization: "tfg",
@@ -54,11 +46,7 @@ export function AiModalPop({ showFloatingIcon = true,showFloatingform = true }: 
   const [isExternalModalOpen, setIsExternalModalOpen] = useState(false);
   const [avatarRegistrationData, setAvatarRegistrationData] =
     useState<AvatarRegistrationData | null>(null);
-  const [countryCode, setCountryCode] = useState("+91"); // Country dial code
-  const [phone, setPhone] = useState(""); // Just the digits
   const [mail, setMail] = useState("");
-  const [selectedCountry, setSelectedCountry] = useState("+91"); // Track selected country
-  const [countrySearch, setCountrySearch] = useState(""); // Search filter for countries
   const [otp, setOtp] = useState("");
   const [otpSent, setOtpSent] = useState(false);
   const [timeLeft, setTimeLeft] = useState(600); // 10 minutes in seconds
@@ -90,12 +78,12 @@ export function AiModalPop({ showFloatingIcon = true,showFloatingform = true }: 
     localStorage.removeItem(`scaleup2026:otp_verified_at:${phoneValue}`);
   };
 
-  const isVerifiedRecently = (phoneValue: string) => {
-    const verifiedAt = getVerifiedAt(phoneValue);
+  const isVerifiedRecently = (mailValue: string) => {
+    const verifiedAt = getVerifiedAt(mailValue);
     if (!verifiedAt) return false;
     const expired = Date.now() - verifiedAt > OTP_VERIFY_TTL_MS;
     if (expired) {
-      clearVerifiedAt(phoneValue);
+      clearVerifiedAt(mailValue);
       return false;
     }
     return true;
@@ -164,6 +152,17 @@ export function AiModalPop({ showFloatingIcon = true,showFloatingform = true }: 
     };
   }, []);
 
+  const emailToPhoneIdent = (emailStr: string) => {
+    if (!emailStr) return "";
+    let hash = 0;
+    for (let i = 0; i < emailStr.length; i++) {
+      hash = (hash << 5) - hash + emailStr.charCodeAt(i);
+      hash = hash & hash;
+    }
+    const absHash = Math.abs(hash).toString();
+    return absHash.slice(0, 10).padStart(10, "0");
+  };
+
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -191,145 +190,118 @@ export function AiModalPop({ showFloatingIcon = true,showFloatingform = true }: 
     setExistingImageUrl(url);
     setShowExistingImageModal(true);
     setShowPhoneModal(false);
-    const combined = countryCode + phone;
-    if (combined) {
-      setVerifiedAt(combined);
+    if (mail) {
+      setVerifiedAt(mail);
     }
   };
 
-  const handleSendMail = async (finalImageUrl: any) => {
-    console.log("mail",mail);
-    
-    if (!mail.trim()) {
-      toast.error("Please enter a mail address");
+  const handleSendMail = async () => {
+    if (!mail.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mail)) {
+      toast.error("Please enter a valid email address");
       return;
     }
-    // const response = await fetch("http://localhost:3002/scaleup2026/otp/generate", {
-    //   method: "POST",
-    //   headers: { "Content-Type": "application/json" },
-    //   body: JSON.stringify({
-    //     mail: mail,
-    //   }),
-    // });
-
-    // console.log("OTP Generate Response Status:", response.status);
-    // const responseData = await response.json().catch(() => ({}));
-    // console.log("OTP Generate Response Data:", responseData);
-
-    // if (response.ok) {
-    //   setOtpSent(true);
-    //   setTimeLeft(600);
-    //   toast.success("OTP sent to your mail address");
-    // } else {
-    //   toast.error(responseData.error || "OTP not able to send.");
-    // }
-    
-    try {
-      const res = await fetch("/api/send-otp", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          to: mail,
-          subject: "ScaleUp Conclave 2026 - OTP Verification",
-          otp : "9876",
-          // finalImageUrl: finalImageUrl || "No image URL found",
-        }),
-      });
-
-      const data = await res.json();
-      console.log("data",data);
-        setOtpSent(true);
-      
-      if (data.success) {
-        console.log("Mail sent successfully ✅");
-        setOtpSent(true);
-        setTimeLeft(600);
-      } else {
-        console.error("Failed to send mail ❌");
-      }
-    } catch (err) {
-      console.error("Error sending mail:", err);
-    }
-  };
-
-  const handleSendOtp = async () => {
-    console.log("phone",phone);
-    
-    if (!phone.trim()) {
-      toast.error("Please enter a phone number");
-      return;
-    }
-
-    const combined = phone;
-    console.log("Sending OTP for:", combined);
 
     setLoading(true);
     try {
-      // const validatePayload = new FormData();
-      // validatePayload.append("name", FIXED_VALIDATE_PAYLOAD.name);
-      // validatePayload.append("email", FIXED_VALIDATE_PAYLOAD.email);
-      // validatePayload.append("phone", combined);
-      // validatePayload.append("district", FIXED_VALIDATE_PAYLOAD.district);
-      // validatePayload.append("category", FIXED_VALIDATE_PAYLOAD.category);
-      // validatePayload.append(
-      //   "organization",
-      //   FIXED_VALIDATE_PAYLOAD.organization,
-      // );
-      // validatePayload.append(
-      //   "did_you_attend_the_previous_scaleup_conclave_",
-      //   FIXED_VALIDATE_PAYLOAD.did_you_attend_the_previous_scaleup_conclave_,
-      // );
+      // 1. Validate RSVP with MakeMyPass
+      const validatePayload = new FormData();
+      validatePayload.append("name", FIXED_VALIDATE_PAYLOAD.name);
+      validatePayload.append("email", mail);
+      validatePayload.append("phone", FIXED_VALIDATE_PAYLOAD.phone);
+      validatePayload.append("district", FIXED_VALIDATE_PAYLOAD.district);
+      validatePayload.append("category", FIXED_VALIDATE_PAYLOAD.category);
+      validatePayload.append(
+        "organization",
+        FIXED_VALIDATE_PAYLOAD.organization,
+      );
+      validatePayload.append(
+        "did_you_attend_the_previous_scaleup_conclave_",
+        FIXED_VALIDATE_PAYLOAD.did_you_attend_the_previous_scaleup_conclave_,
+      );
 
-      // const validateResponse = await fetch(MAKEMYPASS_VALIDATE_URL, {
-      //   method: "POST",
-      //   body: validatePayload,
-      // });
+      const validateResponse = await fetch(MAKEMYPASS_VALIDATE_URL, {
+        method: "POST",
+        body: validatePayload,
+      });
 
-      // if (validateResponse.status === 200) {
-      //   openRegistrationModal();
-      //   toast.error("You are not registered. Please complete registration first.");
-      //   setLoading(false);
-      //   setShowPhoneModal(false);
-      //   return;
-      // }
+      if (validateResponse.status === 400) {
+        // User is registered in RSVP - ensure they exist in ScaleUp backend too
+        const phoneIdent = emailToPhoneIdent(mail);
+        try {
+          await fetch("https://scaleup.frameforge.one/scaleup2026/register", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              name: FIXED_VALIDATE_PAYLOAD.name,
+              email: mail,
+              phone_no: phoneIdent,
+              district: FIXED_VALIDATE_PAYLOAD.district,
+              category: FIXED_VALIDATE_PAYLOAD.category,
+              organization: FIXED_VALIDATE_PAYLOAD.organization,
+            }),
+          });
+        } catch (regErr) {
+          console.warn("Silent registration before OTP failed (likely already exists):", regErr);
+        }
 
-      // if (validateResponse.status === 400) {
-      //   const storedUrl = getStoredImageUrl(combined);
-      //   if (storedUrl) {
-      //     handleShowExistingImage(storedUrl);
-      //     setLoading(false);
-      //     return;
-      //   }
+        const storedUrl = getStoredImageUrl(mail);
+        if (storedUrl) {
+          handleShowExistingImage(storedUrl);
+          setLoading(false);
+          return;
+        }
+        setShouldOpenAvatarAfterOtp(true);
+      } else if (validateResponse.status === 200) {
+        openRegistrationModal();
+        toast.error("You are not registered. Please complete registration first.");
+        setLoading(false);
+        setShowPhoneModal(false);
+        return;
+      } else {
+        toast.error("Unable to verify registration. Please try again.");
+        setLoading(false);
+        return;
+      }
 
-      //   setShouldOpenAvatarAfterOtp(true);
-      // } else {
-      //   toast.error("Unable to verify registration. Please try again.");
-      //   setLoading(false);
-      //   return;
-      // }
-
+      // 2. Generate OTP from backend
+      const phoneIdent = emailToPhoneIdent(mail);
       const response = await fetch("https://scaleup.frameforge.one/scaleup2026/otp/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          phone_no: combined,
+          phone_no: phoneIdent,
+          phoneNumber: phoneIdent,
+          email: mail,
         }),
       });
 
-      console.log("OTP Generate Response Status:", response.status);
       const responseData = await response.json().catch(() => ({}));
-      console.log("OTP Generate Response Data:", responseData);
+      if (response.ok && responseData.otp) {
+        // 3. Send OTP via local mailer
+        const mailRes = await fetch("/api/send-otp", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            to: mail,
+            subject: "Your ScaleUp OTP Code",
+            otp: responseData.otp,
+          }),
+        });
 
-      if (response.ok) {
-        setOtpSent(true);
-        setTimeLeft(600);
-        toast.success("OTP sent to your phone number");
+        const mailData = await mailRes.json();
+        if (mailData.success) {
+          setOtpSent(true);
+          setTimeLeft(600);
+          toast.success("OTP sent to your email address");
+        } else {
+          toast.error("Failed to send email. Please try again.");
+        }
       } else {
-        toast.error(responseData.error || "OTP not able to send.");
+        toast.error(responseData.error || "Unable to generate OTP.");
       }
     } catch (error) {
-      console.error("Error sending OTP:", error);
-      toast.error("Error sending OTP. Please try again.");
+      console.error("Error in handleSendMail:", error);
+      toast.error("Error processing request. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -343,8 +315,8 @@ export function AiModalPop({ showFloatingIcon = true,showFloatingform = true }: 
 
     setLoading(true);
     try {
-      const combined = countryCode + phone;
-      console.log("Verifying OTP for:", combined, "OTP:", otp);
+      const phoneIdent = emailToPhoneIdent(mail);
+      console.log("Verifying OTP for:", mail, "(Ident:", phoneIdent, ") OTP:", otp);
 
       const response = await fetch(
         "https://scaleup.frameforge.one/scaleup2026/otp/verify",
@@ -352,19 +324,17 @@ export function AiModalPop({ showFloatingIcon = true,showFloatingform = true }: 
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            phoneNumber: combined,
+            phone_no: phoneIdent,
+            phoneNumber: phoneIdent,
+            email: mail,
             otp,
           }),
         },
       );
 
-      console.log("OTP Verify Response Status:", response.status);
       const responseData = await response.json().catch(() => ({}));
-      console.log("OTP Verify Response Data:", responseData);
 
       if (response.ok) {
-        const combined = countryCode + phone;
-
         // Check if backend response contains generated_image_url (nested in user object)
         const backendImageUrl =
           responseData.user?.generated_image_url ||
@@ -374,7 +344,7 @@ export function AiModalPop({ showFloatingIcon = true,showFloatingform = true }: 
           // Store it in localStorage for future use
           if (typeof window !== "undefined") {
             localStorage.setItem(
-              `scaleup2026:final_image_url:${combined}`,
+              `scaleup2026:final_image_url:${mail}`,
               backendImageUrl,
             );
           }
@@ -383,7 +353,7 @@ export function AiModalPop({ showFloatingIcon = true,showFloatingform = true }: 
           return;
         }
 
-        toast.success("Phone number verified successfully!");
+        toast.success("Email verified successfully!");
         if (shouldOpenAvatarAfterOtp) {
           handleOpenAvatarGenerator();
         } else {
@@ -401,27 +371,27 @@ export function AiModalPop({ showFloatingIcon = true,showFloatingform = true }: 
   };
 
   const handleResendOtp = () => {
-    handleSendOtp();
+    handleSendMail();
   };
 
   const handleOpenAvatarGenerator = () => {
     setShowPhoneModal(false);
+    const phoneIdent = emailToPhoneIdent(mail);
     setAvatarRegistrationData({
-      name: "",
-      email: "",
-      phone_no: countryCode + phone,
-      district: "",
-      category: "",
-      organization: "",
+      name: FIXED_VALIDATE_PAYLOAD.name,
+      email: mail,
+      phone_no: phoneIdent, // Use digits for unique record
+      district: FIXED_VALIDATE_PAYLOAD.district,
+      category: FIXED_VALIDATE_PAYLOAD.category,
+      organization: FIXED_VALIDATE_PAYLOAD.organization,
     });
     setIsAvatarModalOpen(true);
     setShouldOpenAvatarAfterOtp(false);
   };
 
   const openPhoneModal = () => {
-    const combined = countryCode + phone;
-    if (combined && isVerifiedRecently(combined)) {
-      const storedUrl = getStoredImageUrl(combined);
+    if (mail && isVerifiedRecently(mail)) {
+      const storedUrl = getStoredImageUrl(mail);
       if (storedUrl) {
         handleShowExistingImage(storedUrl);
         return;
@@ -434,10 +404,6 @@ export function AiModalPop({ showFloatingIcon = true,showFloatingform = true }: 
   };
 
   const resetForm = () => {
-    setCountryCode("+91");
-    setSelectedCountry("+91");
-    setCountrySearch("");
-    setPhone("");
     setMail("");
     setOtp("");
     setOtpSent(false);
@@ -445,23 +411,7 @@ export function AiModalPop({ showFloatingIcon = true,showFloatingform = true }: 
     setShouldOpenAvatarAfterOtp(false);
   };
 
-  // Filter countries based on search
-  const filteredCountries = allCountries.filter((country: any) => {
-    const searchLower = countrySearch.toLowerCase();
-    return (
-      country.name.toLowerCase().includes(searchLower) ||
-      country.dialCode.includes(searchLower) ||
-      country.iso2?.toLowerCase().includes(searchLower)
-    );
-  });
-
-  // Get selected country display name
-  const getSelectedCountryDisplay = () => {
-    const country = allCountries.find(
-      (c: any) => c.dialCode === selectedCountry,
-    );
-    return country ? `${country.dialCode} ${country.name}` : selectedCountry;
-  };
+  // Filter and selection logic removed as we no longer use phone/country select
 
   const handleClosePhoneModal = () => {
     setShowPhoneModal(false);
@@ -478,7 +428,7 @@ export function AiModalPop({ showFloatingIcon = true,showFloatingform = true }: 
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `avatar-${countryCode}${phone || "user"}.png`;
+      link.download = `avatar-${mail || "user"}.png`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -497,7 +447,7 @@ export function AiModalPop({ showFloatingIcon = true,showFloatingform = true }: 
       <Dialog open={showPhoneModal} onOpenChange={handleClosePhoneModal}>
         <DialogContent className="w-[600px] h-[372px] p-0 overflow-hidden rounded-xl [&>button]:text-white ">
         <VisuallyHidden>
-          <DialogTitle>Phone Number Verification</DialogTitle>
+          <DialogTitle>Email Verification</DialogTitle>
         </VisuallyHidden>
 
           <div className="flex flex-col md:flex-row h-full">
@@ -542,8 +492,7 @@ export function AiModalPop({ showFloatingIcon = true,showFloatingform = true }: 
                       Enter OTP
                     </label>
                     <p className="text-xs text-gray-500">
-                      OTP sent to {countryCode}
-                      {phone}
+                      OTP sent to {mail}
                     </p>
                     <input
                       type="text"
