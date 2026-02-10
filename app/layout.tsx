@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import Script from "next/script";
-import AiModalPop from "@/components/AiModalPop";
 
 export const metadata: Metadata = {
   title: "ScaleUp Conclave",
@@ -25,8 +24,6 @@ export default function RootLayout({
           strategy="afterInteractive"
         />
         {children}
-        {/* AI Image Generation Modal */}
-        <AiModalPop showFloatingIcon={true} />
       </body>
     </html>
   );
