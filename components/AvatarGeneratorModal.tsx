@@ -22,7 +22,6 @@ interface AvatarGeneratorModalProps {
   registrationData?: {
     name: string;
     email: string;
-    phone_no: string;
     district: string;
     category: string;
     organization: string;
@@ -114,7 +113,6 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
   const [formData, setFormData] = useState({
     name: registrationData?.name || "",
     email: registrationData?.email || "",
-    phone_no: registrationData?.phone_no || "",
     district: registrationData?.district || "",
     category: registrationData?.category || "",
     organization: registrationData?.organization || "",
@@ -319,7 +317,6 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
       const apiFormData = new FormData();
       apiFormData.append("name", formData.name);
       apiFormData.append("email", formData.email);
-      if (formData.phone_no) apiFormData.append("phone_no", formData.phone_no);
       apiFormData.append("district", formData.district);
       apiFormData.append("category", formData.category);
       apiFormData.append("organization", formData.organization);

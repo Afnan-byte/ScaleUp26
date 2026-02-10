@@ -394,7 +394,6 @@ export default function RegistrationModal({
                     registrationData={{
                       name: formData.name,
                       email: formData.email,
-                      phone_no: formData.countryCode + formData.phone,
                       district: formData.district,
                       category: formData.category,
                       organization: formData.organization,

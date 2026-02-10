@@ -15,7 +15,6 @@ import AvatarGeneratorModal from "@/components/AvatarGeneratorModal";
 interface AvatarRegistrationData {
   name: string;
   email: string;
-  phone_no: string;
   district: string;
   category: string;
   organization: string;
@@ -363,7 +362,6 @@ export function AiModalPop({
     setAvatarRegistrationData({
       name: "",
       email: mail,
-      phone_no: "",
       district: "",
       category: "",
       organization: "",
