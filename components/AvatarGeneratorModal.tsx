@@ -120,33 +120,6 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
     organization: registrationData?.organization || "",
   });
 
-  const handleSendMail = async (finalImageUrl: string) => {
-    if (!formData.email || !finalImageUrl) return;
-    try {
-      await fetch("/api/send-mail", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          to: formData.email,
-          subject: "ScaleUp - Your Generated Avatar",
-          finalImageUrl: finalImageUrl,
-        }),
-      });
-    } catch (err) {
-      console.error("Error sending mail:", err);
-    }
-  };
-
-  useEffect(() => {
-    if (!generatedImageUrl || !formData.email) return;
-    if (typeof window === "undefined") return;
-    try {
-      handleSendMail(generatedImageUrl);
-    } catch (error) {
-      console.error("Failed to send mail:", error);
-    }
-  }, [generatedImageUrl, formData.email]);
-
   useEffect(() => {
     if (!isGenerating) return;
     const interval = setInterval(() => {
