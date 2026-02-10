@@ -398,7 +398,7 @@ export function AiModalPop({
       const filename = `avatar-${mail || "user"}.png`;
       const proxyUrl = `/api/proxy-image?url=${encodeURIComponent(
         existingImageUrl
-      )}&filename=${encodeURIComponent(filename)}`;
+      )}&filename=${encodeURIComponent(filename)}&disposition=attachment`;
 
       const response = await fetch(proxyUrl);
       if (!response.ok) throw new Error("Failed to fetch image via proxy");
@@ -569,7 +569,7 @@ export function AiModalPop({
           <div className="mt-4 sm:mt-6 flex flex-col items-center gap-3 sm:gap-4">
             <div className="w-full max-h-[50vh] sm:max-h-[60vh] overflow-hidden rounded-2xl sm:rounded-3xl border border-zinc-200 bg-zinc-50 flex items-center justify-center">
               <img
-                src={existingImageUrl}
+                src={`/api/proxy-image?url=${encodeURIComponent(existingImageUrl)}&disposition=inline`}
                 alt="Generated avatar"
                 className="w-full h-auto max-h-[50vh] sm:max-h-[60vh] object-contain"
               />

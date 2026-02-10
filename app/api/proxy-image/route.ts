@@ -4,6 +4,7 @@ export async function GET(req: NextRequest) {
   const searchParams = req.nextUrl.searchParams;
   const url = searchParams.get("url");
   const filename = searchParams.get("filename") || "image.png";
+  const disposition = searchParams.get("disposition") || "attachment";
 
   if (!url) {
     return NextResponse.json({ error: "URL is required" }, { status: 400 });
@@ -24,7 +25,7 @@ export async function GET(req: NextRequest) {
     return new NextResponse(buffer, {
       headers: {
         "Content-Type": contentType,
-        "Content-Disposition": `attachment; filename="${filename}"`,
+        "Content-Disposition": `${disposition}; filename="${filename}"`,
       },
     });
   } catch (error) {

@@ -443,7 +443,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
     try {
       // Use proxy to fetch image to bypass CORS and force download
       const filename = `avatar-${formData.name || "user"}.png`;
-      const proxyUrl = `/api/proxy-image?url=${encodeURIComponent(imageUrl)}&filename=${encodeURIComponent(filename)}`;
+      const proxyUrl = `/api/proxy-image?url=${encodeURIComponent(imageUrl)}&filename=${encodeURIComponent(filename)}&disposition=attachment`;
       
       const response = await fetch(proxyUrl);
       if (!response.ok) throw new Error("Failed to fetch image");
@@ -825,7 +825,11 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
                       className="w-full h-full flex flex-col items-center justify-center px-6 pb-16"
                     >
                       <img
-                        src={isGenerated ? generatedImageUrl : activeOption.previewImg}
+                        src={
+                          isGenerated
+                            ? `/api/proxy-image?url=${encodeURIComponent(generatedImageUrl)}&disposition=inline`
+                            : activeOption.previewImg
+                        }
                         alt="Avatar preview"
                         className="max-h-[75vh] max-w-full object-contain rounded-2xl shadow-2xl"
                         onError={(e) => {
