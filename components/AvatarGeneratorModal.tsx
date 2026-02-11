@@ -16,16 +16,19 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "react-hot-toast";
 
+interface AvatarRegistrationData {
+  name: string;
+  email: string;
+  phone_no?: string;
+  district: string;
+  category: string;
+  organization: string;
+}
+
 interface AvatarGeneratorModalProps {
   isOpen: boolean;
   onClose: () => void;
-  registrationData?: {
-    name: string;
-    email: string;
-    district: string;
-    category: string;
-    organization: string;
-  };
+  registrationData?: AvatarRegistrationData;
 }
 
 type GenerationType = "superhero" | "professional" | "medieval";
@@ -113,6 +116,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
   const [formData, setFormData] = useState({
     name: registrationData?.name || "",
     email: registrationData?.email || "",
+    phone_no: registrationData?.phone_no || "0000000000",
     district: registrationData?.district || "",
     category: registrationData?.category || "",
     organization: registrationData?.organization || "",
@@ -131,6 +135,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
       setFormData({
         name: registrationData.name,
         email: registrationData.email,
+        phone_no: registrationData.phone_no || "0000000000",
         district: registrationData.district,
         category: registrationData.category,
         organization: registrationData.organization,
@@ -286,29 +291,47 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
     setIsGenerating(true);
 
     const fetchGeneratedImageUrl = async (userId: string) => {
-      const maxAttempts = 30;
+      const maxAttempts = 60; // Increase to 2 minutes
       const delayMs = 2000;
+
+      console.log(`Starting polling for user ${userId}...`);
 
       for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
         try {
           const response = await fetch(`https://scaleup.frameforge.one/scaleup2026/user/${userId}`);
-          let result;
-          try {
-            const text = await response.text();
-            result = text ? JSON.parse(text) : {};
-          } catch (parseError) {
+          if (!response.ok) {
+            console.warn(`Polling attempt ${attempt + 1}: API returned status ${response.status}`);
+            await new Promise((resolve) => setTimeout(resolve, delayMs));
             continue;
           }
 
-          if (response.ok && result.final_image_url) return getAbsoluteUrl(result.final_image_url as string);
-          if (response.ok && result.generated_image_url) return getAbsoluteUrl(result.generated_image_url as string);
-          if (response.ok && result.image_url) return getAbsoluteUrl(result.image_url as string);
+          const text = await response.text();
+          let result;
+          try {
+            result = text ? JSON.parse(text) : {};
+          } catch (parseError) {
+            console.warn(`Polling attempt ${attempt + 1}: JSON parse error`, parseError);
+            await new Promise((resolve) => setTimeout(resolve, delayMs));
+            continue;
+          }
+
+          const finalUrl = extractFinalImageUrl(result);
+          if (finalUrl) {
+            console.log(`Polling successful on attempt ${attempt + 1}! Found image:`, finalUrl);
+            return getAbsoluteUrl(finalUrl);
+          }
+          
+          if (attempt % 5 === 0) {
+            console.log(`Polling attempt ${attempt + 1}: Image not ready yet...`);
+          }
         } catch (error) {
-          console.error("Error polling generated image:", error);
+          console.error(`Polling attempt ${attempt + 1}: Network error:`, error);
         }
 
         await new Promise((resolve) => setTimeout(resolve, delayMs));
       }
+      
+      console.error("Polling timed out after 120 seconds.");
       return "";
     };
 
@@ -316,7 +339,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
       const apiFormData = new FormData();
       apiFormData.append("name", formData.name);
       apiFormData.append("email", formData.email);
-      apiFormData.append("phone_no", "0000000000");
+      apiFormData.append("phone_no", formData.phone_no);
       apiFormData.append("district", formData.district);
       apiFormData.append("category", formData.category);
       apiFormData.append("organization", formData.organization);
@@ -605,13 +628,13 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
 
                         <div>
                           <label className="block text-sm font-semibold text-gray-900 mb-1.5">
-                            Company Name
+                            School / College / Organization
                           </label>
                           <input
                             name="organization"
                             value={formData.organization}
                             onChange={handleFormChange}
-                            placeholder="Company Name"
+                            placeholder="Enter your organization"
                             className="w-full h-11 px-4 rounded-lg border border-gray-300 bg-white text-gray-900 placeholder:text-gray-400 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition"
                           />
                         </div>

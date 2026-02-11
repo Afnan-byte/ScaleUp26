@@ -394,6 +394,7 @@ export default function RegistrationModal({
                     registrationData={{
                       name: formData.name,
                       email: formData.email,
+                      phone_no: `${formData.countryCode}${formData.phone}`,
                       district: formData.district,
                       category: formData.category,
                       organization: formData.organization,
@@ -498,7 +499,7 @@ function RegistrationForm({
             onChange={handleChange}
             onFocus={() => setFocusedField("name")}
             onBlur={() => setFocusedField(null)}
-            className="p-3 w-[70%] border rounded-lg text-gray-700 h-[45px] placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            className="p-3 w-full md:w-[70%] border rounded-lg text-gray-700 h-[45px] placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
             style={{ ...getBoxStyle("name")}}
             placeholder="Enter your name"
             required
@@ -517,7 +518,7 @@ function RegistrationForm({
             onChange={handleChange}
             onFocus={() => setFocusedField("email")}
             onBlur={() => setFocusedField(null)}
-            className="p-3 w-[70%] border h-[45px] rounded-lg text-gray-700 placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            className="p-3 w-full md:w-[70%] border h-[45px] rounded-lg text-gray-700 placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
             style={{ ...getBoxStyle("email")}}
             placeholder="Enter your email"
             required
@@ -529,7 +530,7 @@ function RegistrationForm({
           <label className="block text-sm font-medium text-gray-900 mb-1.5">
             Phone Number <span className="text-red-500">*</span>
           </label>
-          <div className="flex gap-2 w-[70%]">
+          <div className="flex gap-2 w-full md:w-[70%]">
             <select
               name="countryCode"
               value={formData.countryCode}
@@ -572,7 +573,7 @@ function RegistrationForm({
             name="district"
             value={formData.district}
             onChange={handleChange}
-            className="pl-3 w-[70%] appearance-none border rounded-lg h-[45px] text-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            className="pl-3 w-full md:w-[70%] appearance-none border rounded-lg h-[45px] text-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
             style={{ ...getBoxStyle("district") }}
             required
           >
@@ -594,6 +595,7 @@ function RegistrationForm({
               "Wayanad",
               "Kannur",
               "Kasaragod",
+              "Others",
             ].map((d) => (
               <option key={d} value={d} className="text-gray-900">
                 {d}
@@ -611,7 +613,7 @@ function RegistrationForm({
             name="category"
             value={formData.category}
             onChange={handleChange}
-            className="pl-3 w-[70%] appearance-none border rounded-lg h-[45px] text-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            className="pl-3 w-full md:w-[70%] appearance-none border rounded-lg h-[45px] text-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
             style={{ ...getBoxStyle("category") }}
             required
           >
@@ -631,7 +633,7 @@ function RegistrationForm({
         {/* Organization */}
         <div>
           <label className="block text-sm font-medium text-gray-900 mb-1.5">
-            Organization
+            School / College / Organization <span className="text-red-500">*</span>
           </label>
           <input
             type="text"
@@ -640,43 +642,53 @@ function RegistrationForm({
             onChange={handleChange}
             onFocus={() => setFocusedField("organization")}
             onBlur={() => setFocusedField(null)}
-            className="p-3 w-[70%] border rounded-lg h-[45px] text-gray-700 placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            className="p-3 w-full md:w-[70%] border rounded-lg text-gray-700 h-[45px] placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
             style={{ ...getBoxStyle("organization")}}
-            placeholder="Enter organization name"
+            placeholder="Enter your organization"
+            required
           />
         </div>
 
         {/* Previous Attendance */}
         <div>
-          <label className="block text-sm font-medium text-gray-900 mb-1.5">
-            Did you attend the previous ScaleUp Conclave <br />(2025)?{" "}
-            <span className="text-red-500">*</span>
+          <label className="block text-sm font-medium text-gray-900 mb-3">
+            Did you attend the previous ScaleUp Conclave? <span className="text-red-500">*</span>
           </label>
-          <select
-            name="previousAttendance"
-            value={formData.previousAttendance}
-            onChange={handleChange}
-            onFocus={() => setFocusedField("previousAttendance")}
-            onBlur={() => setFocusedField(null)}
-            className="appearance-none p-3 w-[70%] border rounded-lg h-[45px] text-gray-700 bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-            style={{ ...getBoxStyle("previousAttendance") }}
-            required
-          >
-            <option value="" disabled>
-              Select an option
-            </option>
-            <option value="Yes">Yes</option>
-            <option value="No">No</option>
-          </select>
+          <div className="flex gap-6">
+            <label className="flex items-center gap-2 cursor-pointer group">
+              <input
+                type="radio"
+                name="previousAttendance"
+                value="Yes"
+                checked={formData.previousAttendance === "Yes"}
+                onChange={handleChange}
+                className="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                required
+              />
+              <span className="text-gray-700 group-hover:text-blue-600 transition">Yes</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer group">
+              <input
+                type="radio"
+                name="previousAttendance"
+                value="No"
+                checked={formData.previousAttendance === "No"}
+                onChange={handleChange}
+                className="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                required
+              />
+              <span className="text-gray-700 group-hover:text-blue-600 transition">No</span>
+            </label>
+          </div>
         </div>
 
-        <div className="pt-2">
+        {/* Submit Button */}
+        <div className="pt-4 pb-10">
           <button
             type="submit"
-            className="w-[70%] py-3.5 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-all shadow-md"
-            style={{ fontSize: '16px' }}
+            className="w-full md:w-[70%] py-4 bg-[#3399FF] text-white rounded-xl font-semibold text-lg hover:bg-blue-600 active:scale-[0.98] transition-all shadow-lg shadow-blue-200"
           >
-            Sign in
+            Continue to Choose Ticket
           </button>
         </div>
 
@@ -952,7 +964,7 @@ function SuccessModal({
           </div>
         ) : (
           <p className="text-base text-gray-600 mb-8">
-            Great news! Your ticket has been sent to your email:{" "}
+            Great news! Your ticket has been sent to your email{" "}
             and WhatsApp along with the invoice. Please check them to confirm.
           </p>
         )}

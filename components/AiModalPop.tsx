@@ -15,6 +15,7 @@ import AvatarGeneratorModal from "@/components/AvatarGeneratorModal";
 interface AvatarRegistrationData {
   name: string;
   email: string;
+  phone_no?: string;
   district: string;
   category: string;
   organization: string;
@@ -211,7 +212,7 @@ export function AiModalPop({
 
   const handleSendMail = async () => {
     if (!mail.trim()) {
-      toast.error("Please enter a mail address");
+      toast.error("Please enter your registered email address");
       return;
     }
 
@@ -309,6 +310,11 @@ export function AiModalPop({
       return;
     }
 
+    if (otp.length !== 6) {
+      toast.error("Please enter a valid 6-digit OTP");
+      return;
+    }
+
     setLoading(true);
     try {
       const response = await fetch(
@@ -328,8 +334,9 @@ export function AiModalPop({
 
       if (response.ok) {
         // Check if backend response contains generated_image_url (nested in user object)
+        const user = responseData.user || {};
         const rawBackendImageUrl =
-          responseData.user?.generated_image_url ||
+          user.generated_image_url ||
           responseData.generated_image_url;
         
         if (rawBackendImageUrl) {
@@ -347,7 +354,7 @@ export function AiModalPop({
         }
 
         toast.success("Verified successfully!");
-        handleOpenAvatarGenerator();
+        handleOpenAvatarGenerator(user);
       } else {
         toast.error(responseData.error || "Invalid OTP. Please try again.");
       }
@@ -363,14 +370,15 @@ export function AiModalPop({
     handleSendMail();
   };
 
-  const handleOpenAvatarGenerator = () => {
+  const handleOpenAvatarGenerator = (userData?: any) => {
     setShowPhoneModal(false);
     setAvatarRegistrationData({
-      name: "",
+      name: userData?.name || "",
       email: mail,
-      district: "",
-      category: "",
-      organization: "",
+      phone_no: userData?.phone_no || userData?.phone || "",
+      district: userData?.district || "",
+      category: userData?.category || "",
+      organization: userData?.organization || "",
     });
     setIsAvatarModalOpen(true);
     setShouldOpenAvatarAfterOtp(false);
@@ -482,58 +490,74 @@ export function AiModalPop({
                 </>
               ) : (
                 <>
-                  <div className="space-y-3 w-full">
-                    <label className="text-xs sm:text-sm font-medium text-gray-700 block">
-                      Enter OTP
-                    </label>
-                    <p className="text-xs text-gray-500">
-                      OTP sent to {mail}
-                    </p>
-                    <input
-                      type="text"
-                      placeholder="Enter 6-digit OTP"
-                      value={otp}
-                      onChange={(e) =>
-                        setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))
-                      }
-                      maxLength={6}
-                      className="w-full px-3 py-2 sm:py-3 border-2 border-indigo-500 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 outline-none text-center text-lg sm:text-xl md:text-2xl tracking-widest"
-                    />
-                  </div>
+                  <div className="space-y-4 w-full">
+                    <div className="flex flex-col gap-1">
+                      <label className="text-sm sm:text-base font-bold text-gray-900 block">
+                        Enter OTP
+                      </label>
+                      <p className="text-xs text-gray-500">
+                        OTP sent to <span className="font-medium text-indigo-600">{mail}</span>
+                      </p>
+                    </div>
 
-                  <button
-                    onClick={handleVerifyOtp}
-                    disabled={loading || otp.length !== 6}
-                    className="w-full px-4 py-2 sm:py-2.5 text-sm sm:text-base rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {loading ? "Verifying..." : "Verify OTP"}
-                  </button>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        placeholder="Enter 6-digit OTP"
+                        value={otp}
+                        onChange={(e) =>
+                          setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))
+                        }
+                        maxLength={6}
+                        className="w-full px-4 py-3 sm:py-4 border-2 border-indigo-500 rounded-xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-600 outline-none text-center text-2xl sm:text-3xl font-bold tracking-[0.5em] sm:tracking-[0.75em] transition-all placeholder:text-gray-300 placeholder:tracking-normal placeholder:text-sm"
+                        autoFocus
+                      />
+                    </div>
 
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs sm:text-sm">
-                    <span className="text-gray-600">Didn't receive OTP?</span>
-                    {timeLeft > 0 ? (
-                      <span className="text-indigo-600 font-medium">
-                        Resend in {formatTime(timeLeft)}
-                      </span>
-                    ) : (
+                    <button
+                      onClick={handleVerifyOtp}
+                      disabled={loading || otp.length !== 6}
+                      className="w-full px-4 py-3 sm:py-4 text-base sm:text-lg rounded-xl bg-indigo-600 text-white font-bold hover:bg-indigo-700 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-indigo-200"
+                    >
+                      {loading ? (
+                        <span className="flex items-center justify-center gap-2">
+                          <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Verifying...
+                        </span>
+                      ) : "Verify & Continue"}
+                    </button>
+
+                    <div className="flex flex-col gap-3">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-600">Didn't receive code?</span>
+                        {timeLeft > 0 ? (
+                          <span className="text-indigo-600 font-bold bg-indigo-50 px-2 py-1 rounded">
+                            {formatTime(timeLeft)}
+                          </span>
+                        ) : (
+                          <button
+                            onClick={handleResendOtp}
+                            className="text-indigo-600 font-bold hover:text-indigo-700 underline underline-offset-4"
+                          >
+                            Resend OTP
+                          </button>
+                        )}
+                      </div>
+
                       <button
-                        onClick={handleResendOtp}
-                        className="text-indigo-600 font-medium hover:text-indigo-700"
+                        onClick={() => {
+                          resetForm();
+                          setOtpSent(false);
+                        }}
+                        className="w-full py-2 text-sm text-gray-500 font-medium hover:text-gray-700 transition-colors"
                       >
-                        Resend OTP
+                        ← Use a different email
                       </button>
-                    )}
+                    </div>
                   </div>
-
-                  <button
-                    onClick={() => {
-                      resetForm();
-                      setOtpSent(false);
-                    }}
-                    className="w-full px-4 py-2 sm:py-2.5 text-sm sm:text-base rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 transition"
-                  >
-                    Change Email
-                  </button>
                 </>
               )}
 

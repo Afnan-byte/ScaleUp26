@@ -5,7 +5,7 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/api/otp/:path*",
-        destination: "https://scaleup.frameforge.one/api/otp/:path*",
+        destination: "https://scaleup.frameforge.one/scaleup2026/otp/:path*",
       },
     ];
   },

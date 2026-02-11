@@ -246,13 +246,11 @@ function Hero() {
         isOpen={isRegisterModalOpen}
         onClose={() => setIsRegisterModalOpen(false)}
       />
-      {showPhoneModal && (
-        <AiModalPop
-          showFloatingIcon={true}
-          showFloatingform={true}
-          onOpenRegistration={() => setIsRegisterModalOpen(true)}
-        />
-      )}
+      <AiModalPop
+        showFloatingIcon={true}
+        showFloatingform={true}
+        onOpenRegistration={() => setIsRegisterModalOpen(true)}
+      />
     </section>
   );
 }
