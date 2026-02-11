@@ -69,6 +69,49 @@ export function AiModalPop({
     return `https://scaleup.frameforge.one/${cleanUrl}`;
   };
 
+  const extractFinalImageUrl = (payload: any): string => {
+    if (!payload || typeof payload !== "object") return "";
+
+    const direct =
+      payload.signed_image_url ||
+      payload.final_image_url ||
+      payload.generated_image_url ||
+      payload.image_url ||
+      payload.photo_url ||
+      payload.photo ||
+      payload?.user?.signed_image_url ||
+      payload?.user?.final_image_url ||
+      payload?.user?.generated_image_url ||
+      payload?.user?.image_url ||
+      payload?.user?.photo_url ||
+      payload?.user?.photo ||
+      payload?.data?.signed_image_url ||
+      payload?.data?.final_image_url ||
+      payload?.data?.generated_image_url ||
+      payload?.data?.image_url ||
+      payload?.result?.signed_image_url ||
+      payload?.result?.final_image_url ||
+      payload?.result?.generated_image_url ||
+      payload?.result?.image_url;
+
+    if (typeof direct === "string" && direct.trim() && direct !== "null" && direct !== "undefined") {
+      return direct;
+    }
+
+    const details = payload?.details || payload?.user?.details;
+    if (typeof details === "string") {
+      try {
+        const parsed = JSON.parse(details);
+        const nested = extractFinalImageUrl(parsed);
+        if (nested) return nested;
+      } catch {
+        const match = details.match(/https?:\/\/[^\s"']+/i);
+        if (match?.[0]) return match[0];
+      }
+    }
+    return "";
+  };
+
   const getVerifiedAt = (email: string) => {
     if (!email || typeof window === "undefined") return 0;
     const raw = localStorage.getItem(
@@ -342,19 +385,12 @@ export function AiModalPop({
       if (response.ok) {
         const user = responseData.user || {};
         
-        // Comprehensive check for image URL in all possible locations
-        const rawBackendImageUrl =
-          user.generated_image_url ||
-          responseData.generated_image_url ||
-          user.photo_url ||
-          user.photo ||
-          responseData.photo_url ||
-          responseData.photo;
+        // Use the robust extractor for the image URL
+        const rawBackendImageUrl = extractFinalImageUrl(responseData);
         
-        console.log("Full user object from OTP:", user);
-        console.log("Extracted raw image URL from OTP response:", rawBackendImageUrl);
+        console.log("Extracted raw image URL using robust helper:", rawBackendImageUrl);
         
-        if (rawBackendImageUrl && rawBackendImageUrl !== "null" && rawBackendImageUrl !== "undefined") {
+        if (rawBackendImageUrl) {
           const backendImageUrl = getAbsoluteUrl(rawBackendImageUrl);
           console.log("Found image URL, showing existing image modal:", backendImageUrl);
           
@@ -367,7 +403,31 @@ export function AiModalPop({
           return;
         }
 
-        console.log("No valid image URL found, opening generator modal");
+        console.log("No valid image URL found, checking if we should fetch from user endpoint...");
+        
+        // If we have a user ID but no image URL in the response, try one more fetch from the user detail endpoint
+        const userId = user.id || user.user_id || responseData.user_id;
+        if (userId) {
+          try {
+            console.log(`Fetching latest data for user ${userId}...`);
+            const userDetailRes = await fetch(`https://scaleup.frameforge.one/scaleup2026/user/${userId}`);
+            if (userDetailRes.ok) {
+              const userDetailData = await userDetailRes.json();
+              const latestImageUrl = extractFinalImageUrl(userDetailData);
+              if (latestImageUrl) {
+                const absoluteLatestUrl = getAbsoluteUrl(latestImageUrl);
+                console.log("Found image URL in user detail fetch:", absoluteLatestUrl);
+                handleShowExistingImage(absoluteLatestUrl);
+                setLoading(false);
+                return;
+              }
+            }
+          } catch (e) {
+            console.error("Error fetching latest user details:", e);
+          }
+        }
+
+        console.log("Still no image URL, opening generator modal");
         toast.success("Verified successfully!");
         handleOpenAvatarGenerator(user);
       } else {
@@ -473,8 +533,16 @@ export function AiModalPop({
     try {
       // Use proxy to fetch image to bypass CORS and force download
       const filename = `avatar-${mail || "user"}.png`;
+      
+      // If the URL is already a proxy URL, extract the original URL
+      let targetUrl = existingImageUrl;
+      if (targetUrl.includes("/api/proxy-image?url=")) {
+        const urlParams = new URLSearchParams(targetUrl.split("?")[1]);
+        targetUrl = urlParams.get("url") || targetUrl;
+      }
+
       const proxyUrl = `/api/proxy-image?url=${encodeURIComponent(
-        existingImageUrl
+        targetUrl
       )}&filename=${encodeURIComponent(filename)}&disposition=attachment`;
 
       console.log("handleDownloadExistingImage: Using proxy URL:", proxyUrl);
@@ -482,7 +550,7 @@ export function AiModalPop({
       const response = await fetch(proxyUrl);
       if (!response.ok) {
         console.error("handleDownloadExistingImage: Proxy response not OK:", response.status);
-        throw new Error("Failed to fetch image via proxy");
+        throw new Error(`Failed to fetch image via proxy (Status: ${response.status})`);
       }
 
       const blob = await response.blob();
@@ -682,12 +750,19 @@ export function AiModalPop({
                   onLoad={() => console.log("Existing image loaded successfully")}
                   onError={(e) => {
                       console.error("Existing image failed to load via proxy:", existingImageUrl);
-                      // Fallback: Try loading directly if proxy fails
                       const imgElement = e.currentTarget as HTMLImageElement;
-                      if (!imgElement.src.includes("proxy-image")) return; // Prevent infinite loop
                       
-                      console.log("Attempting direct image load fallback...");
-                      imgElement.src = existingImageUrl;
+                      // If it already failed direct load, don't try again
+                      if (imgElement.getAttribute("data-fallback-failed") === "true") return;
+
+                      if (imgElement.src.includes("proxy-image")) {
+                        console.log("Attempting direct image load fallback...");
+                        imgElement.src = existingImageUrl;
+                      } else {
+                        console.error("Direct image load also failed.");
+                        imgElement.setAttribute("data-fallback-failed", "true");
+                        toast.error("Image could not be loaded. It might be private or expired.");
+                      }
                     }}
                   />
                 ) : (

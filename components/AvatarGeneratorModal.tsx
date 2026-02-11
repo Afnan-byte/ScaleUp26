@@ -251,12 +251,15 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
     if (!payload || typeof payload !== "object") return "";
 
     const direct =
+      payload.signed_image_url ||
       payload.final_image_url ||
       payload.generated_image_url ||
       payload.image_url ||
+      payload?.data?.signed_image_url ||
       payload?.data?.final_image_url ||
       payload?.data?.generated_image_url ||
       payload?.data?.image_url ||
+      payload?.result?.signed_image_url ||
       payload?.result?.final_image_url ||
       payload?.result?.generated_image_url ||
       payload?.result?.image_url;
