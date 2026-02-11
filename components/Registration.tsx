@@ -332,7 +332,7 @@ export default function RegistrationModal({
       {/* Overlay with backdrop blur */}
       <div
         className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm"
-        onClick={onClose}
+        // onClick={onClose} // Removed to prevent closing on outside click
       >
         {/* Modal Container - Full screen on mobile, split on desktop */}
         <div className="fixed inset-0 flex items-center justify-center p-0 md:p-4">
