@@ -70,6 +70,7 @@ export function AiModalPop({
   };
 
   const extractFinalImageUrl = (payload: any): string => {
+    console.log("extractFinalImageUrl processing payload:", JSON.stringify(payload, null, 2));
     if (!payload || typeof payload !== "object") return "";
 
     const direct =
@@ -95,20 +96,26 @@ export function AiModalPop({
       payload?.result?.image_url;
 
     if (typeof direct === "string" && direct.trim() && direct !== "null" && direct !== "undefined") {
+      console.log("Found direct image URL:", direct);
       return direct;
     }
 
     const details = payload?.details || payload?.user?.details;
     if (typeof details === "string") {
+      console.log("Checking details field for URL:", details);
       try {
         const parsed = JSON.parse(details);
         const nested = extractFinalImageUrl(parsed);
         if (nested) return nested;
       } catch {
         const match = details.match(/https?:\/\/[^\s"']+/i);
-        if (match?.[0]) return match[0];
+        if (match?.[0]) {
+          console.log("Found URL via regex match in details:", match[0]);
+          return match[0];
+        }
       }
     }
+    console.log("No image URL found in this payload level");
     return "";
   };
 
@@ -398,12 +405,28 @@ export function AiModalPop({
             localStorage.setItem(`scaleup2026:final_image_url:${mail}`, backendImageUrl);
           }
           
-          handleShowExistingImage(backendImageUrl);
-          setLoading(false);
-          return;
+          // CRITICAL: Check if the image is actually accessible before showing modal
+          setLoading(true);
+          try {
+            console.log("Checking image accessibility for:", backendImageUrl);
+            const proxyCheckUrl = `/api/proxy-image?url=${encodeURIComponent(backendImageUrl)}&disposition=inline`;
+            const checkRes = await fetch(proxyCheckUrl, { method: 'HEAD' });
+            
+            if (checkRes.ok) {
+              console.log("Image is accessible via proxy, showing modal");
+              handleShowExistingImage(backendImageUrl);
+              setLoading(false);
+              return;
+            } else {
+              console.warn(`Image check failed via proxy (Status: ${checkRes.status}). Falling back to generator.`);
+              toast.error("Your avatar was found but is currently inaccessible. You can generate a new one.");
+            }
+          } catch (e) {
+            console.error("Error checking image accessibility:", e);
+          }
         }
 
-        console.log("No valid image URL found, checking if we should fetch from user endpoint...");
+        console.log("No valid or accessible image URL found, checking if we should fetch from user endpoint...");
         
         // If we have a user ID but no image URL in the response, try one more fetch from the user detail endpoint
         const userId = user.id || user.user_id || responseData.user_id;

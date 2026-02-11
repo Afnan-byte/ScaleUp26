@@ -19,14 +19,28 @@ const BUCKET_NAME = process.env.AWS_S3_BUCKET_NAME || "frameforge";
 function extractS3Key(url: string): string | null {
   try {
     const urlObj = new URL(url);
+    
+    // Pattern 1: bucket.s3.region.amazonaws.com/key
     if (urlObj.hostname.includes("s3.ap-south-1.amazonaws.com")) {
-      // For hostname like bucket.s3.region.amazonaws.com, the path is the key
       return urlObj.pathname.startsWith("/") ? urlObj.pathname.slice(1) : urlObj.pathname;
     }
+    
+    // Pattern 2: s3.region.amazonaws.com/bucket/key
+    if (urlObj.hostname === "s3.ap-south-1.amazonaws.com") {
+      const parts = urlObj.pathname.split("/").filter(Boolean);
+      if (parts.length > 1) {
+        return parts.slice(1).join("/");
+      }
+    }
+
     return null;
   } catch {
     return null;
   }
+}
+
+export async function HEAD(req: NextRequest) {
+  return GET(req);
 }
 
 export async function GET(req: NextRequest) {
@@ -40,23 +54,35 @@ export async function GET(req: NextRequest) {
   }
 
   try {
+    console.log("Proxy-image: Request received for URL:", url);
+    
     // Check if it's an S3 URL that might need a presigned URL
     // If it's a raw S3 URL (not already presigned), we generate a presigned one
     if (url.includes("s3.ap-south-1.amazonaws.com") && !url.includes("X-Amz-Signature")) {
       const key = extractS3Key(url);
       if (key) {
-        console.log("Generating presigned URL for S3 key:", key);
-        const command = new GetObjectCommand({
-          Bucket: BUCKET_NAME,
-          Key: key,
-        });
-        url = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
+        console.log("Proxy-image: Generating presigned URL for S3 key:", key);
+        try {
+          const command = new GetObjectCommand({
+            Bucket: BUCKET_NAME,
+            Key: key,
+          });
+          const presignedUrl = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
+          console.log("Proxy-image: Successfully generated presigned URL");
+          url = presignedUrl;
+        } catch (s3Error) {
+          console.error("Proxy-image: S3 Presigned URL generation failed:", s3Error);
+          // Fallback to original URL if presigning fails
+        }
+      } else {
+        console.warn("Proxy-image: S3 URL detected but key could not be extracted:", url);
       }
     }
 
-    console.log("Proxy fetching from URL:", url);
+    console.log("Proxy-image: Final fetch target URL:", url);
 
     const response = await fetch(url, {
+      method: req.method, // Pass through the method (GET or HEAD)
       headers: {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         "Accept": "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
@@ -65,11 +91,21 @@ export async function GET(req: NextRequest) {
     });
     
     if (!response.ok) {
-      console.error(`Proxy: Fetch failed with status ${response.status} for URL: ${url}`);
+      console.error(`Proxy-image: Fetch failed with status ${response.status} for URL: ${url}`);
       return NextResponse.json(
         { error: `Failed to fetch image from source (${response.status})` },
         { status: response.status }
       );
+    }
+
+    // If it was a HEAD request, return early
+    if (req.method === 'HEAD') {
+      return new NextResponse(null, {
+        status: 200,
+        headers: {
+          "Content-Type": response.headers.get("content-type") || "image/png",
+        },
+      });
     }
 
     const contentType = response.headers.get("content-type") || "application/octet-stream";
