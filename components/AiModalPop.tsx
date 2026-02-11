@@ -202,7 +202,9 @@ export function AiModalPop({
   };
 
   const handleShowExistingImage = (url: string) => {
+    console.log("handleShowExistingImage called with URL:", url);
     const absUrl = getAbsoluteUrl(url);
+    console.log("Converted to absolute URL:", absUrl);
     setExistingImageUrl(absUrl);
     setShowExistingImageModal(true);
     setShowPhoneModal(false);
@@ -327,26 +329,29 @@ export function AiModalPop({
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-        email: mail,
-        phone_no: "0000000000", // The backend only needs email for OTP lookup, but we keep this for compatibility
-        otp,
-      }),
+            email: mail,
+            phone_no: "0000000000",
+            otp,
+          }),
         },
       );
 
       const responseData = await response.json().catch(() => ({}));
+      console.log("OTP Verification Response:", responseData);
 
       if (response.ok) {
-        // Check if backend response contains generated_image_url (nested in user object)
         const user = responseData.user || {};
         const rawBackendImageUrl =
           user.generated_image_url ||
-          responseData.generated_image_url;
+          responseData.generated_image_url ||
+          user.photo_url; // Fallback to photo_url if generated is missing
+        
+        console.log("Extracted raw image URL:", rawBackendImageUrl);
         
         if (rawBackendImageUrl) {
           const backendImageUrl = getAbsoluteUrl(rawBackendImageUrl);
-          console.log("OTP Verification: Found generated image URL:", backendImageUrl);
-          // Store it in localStorage for future use
+          console.log("Final Absolute image URL:", backendImageUrl);
+          
           if (typeof window !== "undefined") {
             localStorage.setItem(
               `scaleup2026:final_image_url:${mail}`,
@@ -663,16 +668,29 @@ export function AiModalPop({
           </DialogHeader>
 
           <div className="mt-4 sm:mt-6 flex flex-col items-center gap-3 sm:gap-4">
-            <div className="w-full max-h-[50vh] sm:max-h-[60vh] overflow-hidden rounded-2xl sm:rounded-3xl border border-zinc-200 bg-zinc-50 flex items-center justify-center">
-              <img
-                src={`/api/proxy-image?url=${encodeURIComponent(existingImageUrl)}&disposition=inline`}
-                alt="Generated avatar"
-                className="w-full h-auto max-h-[50vh] sm:max-h-[60vh] object-contain"
-              />
+            <div className="w-full max-h-[50vh] sm:max-h-[60vh] overflow-hidden rounded-2xl sm:rounded-3xl border border-zinc-200 bg-zinc-50 flex items-center justify-center min-h-[200px]">
+              {existingImageUrl ? (
+                <img
+                  src={`/api/proxy-image?url=${encodeURIComponent(existingImageUrl)}&disposition=inline`}
+                  alt="Generated avatar"
+                  className="w-full h-auto max-h-[50vh] sm:max-h-[60vh] object-contain"
+                  onLoad={() => console.log("Existing image loaded successfully")}
+                  onError={(e) => {
+                    console.error("Existing image failed to load:", existingImageUrl);
+                    toast.error("Failed to load your preview. You can still try the download button.");
+                  }}
+                />
+              ) : (
+                <div className="flex flex-col items-center gap-2 p-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+                  <p className="text-sm text-gray-500">Preparing your avatar...</p>
+                </div>
+              )}
             </div>
             <button
               onClick={handleDownloadExistingImage}
-              className="flex items-center gap-2 rounded-xl sm:rounded-2xl bg-zinc-900 px-6 sm:px-8 py-2.5 sm:py-3 text-sm sm:text-base font-semibold text-white transition hover:bg-zinc-800"
+              disabled={!existingImageUrl}
+              className="flex items-center gap-2 rounded-xl sm:rounded-2xl bg-zinc-900 px-6 sm:px-8 py-2.5 sm:py-3 text-sm sm:text-base font-semibold text-white transition hover:bg-zinc-800 disabled:opacity-50"
             >
               Download
             </button>
