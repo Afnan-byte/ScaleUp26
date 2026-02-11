@@ -21,16 +21,25 @@ function extractS3Key(url: string): string | null {
     const urlObj = new URL(url);
     
     // Pattern 1: bucket.s3.region.amazonaws.com/key
-    if (urlObj.hostname.includes("s3.ap-south-1.amazonaws.com")) {
+    // Pattern 2: bucket.s3-region.amazonaws.com/key
+    if (urlObj.hostname.includes(".s3.") || urlObj.hostname.includes(".s3-")) {
       return urlObj.pathname.startsWith("/") ? urlObj.pathname.slice(1) : urlObj.pathname;
     }
     
-    // Pattern 2: s3.region.amazonaws.com/bucket/key
-    if (urlObj.hostname === "s3.ap-south-1.amazonaws.com") {
+    // Pattern 3: s3.region.amazonaws.com/bucket/key
+    if (urlObj.hostname.startsWith("s3.")) {
       const parts = urlObj.pathname.split("/").filter(Boolean);
       if (parts.length > 1) {
+        // The first part is the bucket name, the rest is the key
         return parts.slice(1).join("/");
       }
+    }
+
+    // Pattern 4: raw s3:// protocol (unlikely but possible)
+    if (url.startsWith("s3://")) {
+      const withoutProtocol = url.replace("s3://", "");
+      const parts = withoutProtocol.split("/");
+      return parts.slice(1).join("/");
     }
 
     return null;
@@ -57,8 +66,11 @@ export async function GET(req: NextRequest) {
     console.log("Proxy-image: Request received for URL:", url);
     
     // Check if it's an S3 URL that might need a presigned URL
-    // If it's a raw S3 URL (not already presigned), we generate a presigned one
-    if (url.includes("s3.ap-south-1.amazonaws.com") && !url.includes("X-Amz-Signature")) {
+    // We check for "s3" in hostname or "amazonaws.com"
+    const isS3Url = url.includes("s3") && url.includes("amazonaws.com");
+    const isAlreadyPresigned = url.includes("X-Amz-Signature");
+
+    if (isS3Url && !isAlreadyPresigned) {
       const key = extractS3Key(url);
       if (key) {
         console.log("Proxy-image: Generating presigned URL for S3 key:", key);
@@ -67,15 +79,13 @@ export async function GET(req: NextRequest) {
             Bucket: BUCKET_NAME,
             Key: key,
           });
-          const presignedUrl = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
+          // Increased expiresIn to 2 hours for safety
+          const presignedUrl = await getSignedUrl(s3Client, command, { expiresIn: 7200 });
           console.log("Proxy-image: Successfully generated presigned URL");
           url = presignedUrl;
         } catch (s3Error) {
           console.error("Proxy-image: S3 Presigned URL generation failed:", s3Error);
-          // Fallback to original URL if presigning fails
         }
-      } else {
-        console.warn("Proxy-image: S3 URL detected but key could not be extracted:", url);
       }
     }
 

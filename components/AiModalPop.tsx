@@ -405,28 +405,13 @@ export function AiModalPop({
             localStorage.setItem(`scaleup2026:final_image_url:${mail}`, backendImageUrl);
           }
           
-          // CRITICAL: Check if the image is actually accessible before showing modal
-          setLoading(true);
-          try {
-            console.log("Checking image accessibility for:", backendImageUrl);
-            const proxyCheckUrl = `/api/proxy-image?url=${encodeURIComponent(backendImageUrl)}&disposition=inline`;
-            const checkRes = await fetch(proxyCheckUrl, { method: 'HEAD' });
-            
-            if (checkRes.ok) {
-              console.log("Image is accessible via proxy, showing modal");
-              handleShowExistingImage(backendImageUrl);
-              setLoading(false);
-              return;
-            } else {
-              console.warn(`Image check failed via proxy (Status: ${checkRes.status}). Falling back to generator.`);
-              toast.error("Your avatar was found but is currently inaccessible. You can generate a new one.");
-            }
-          } catch (e) {
-            console.error("Error checking image accessibility:", e);
-          }
+          // Force showing the existing image modal immediately
+          handleShowExistingImage(backendImageUrl);
+          setLoading(false);
+          return;
         }
 
-        console.log("No valid or accessible image URL found, checking if we should fetch from user endpoint...");
+        console.log("No image URL found, checking if we should fetch from user endpoint...");
         
         // If we have a user ID but no image URL in the response, try one more fetch from the user detail endpoint
         const userId = user.id || user.user_id || responseData.user_id;
@@ -552,6 +537,7 @@ export function AiModalPop({
     }
 
     console.log("handleDownloadExistingImage: Starting with URL:", existingImageUrl);
+    setLoading(true);
 
     try {
       // Use proxy to fetch image to bypass CORS and force download
@@ -587,10 +573,13 @@ export function AiModalPop({
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
+      toast.success("Download started!");
     } catch (error) {
       console.error("handleDownloadExistingImage: Error during download process:", error);
-      toast.error("Error downloading image. Opening in new tab instead.");
+      toast.error("Download failed. Opening in new tab instead.");
       window.open(existingImageUrl, "_blank", "noopener,noreferrer");
+    } finally {
+      setLoading(false);
     }
   };
 
