@@ -305,12 +305,15 @@ export function AiModalPop({
   };
 
   const handleVerifyOtp = async () => {
-    if (!otp.trim()) {
+    console.log("handleVerifyOtp called with OTP:", otp);
+    if (!otp || !otp.trim()) {
+      console.log("OTP is empty");
       toast.error("Please enter OTP");
       return;
     }
 
     if (otp.length !== 6) {
+      console.log("OTP length is not 6:", otp.length);
       toast.error("Please enter a valid 6-digit OTP");
       return;
     }

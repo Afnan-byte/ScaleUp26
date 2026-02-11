@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Script from "next/script";
 
+import { Toaster } from "react-hot-toast";
+
 export const metadata: Metadata = {
   title: "ScaleUp Conclave",
   description: "ScaleUp Conclave - 2026",
@@ -18,6 +20,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
+        <Toaster position="top-center" reverseOrder={false} />
         {/* Razorpay Checkout Script */}
         <Script
           src="https://checkout.razorpay.com/v1/checkout.js"
