@@ -6,7 +6,7 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "postinstall": "npm rebuild",
+    "postinstall": "if [ \"$CI\" = \"true\" ]; then echo \"Skipping npm rebuild on CI\"; else npm rebuild; fi",
     "lint": "eslint"
   },
   "dependencies": {
