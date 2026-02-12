@@ -258,6 +258,11 @@ export function AiModalPop({
     setExistingImageUrl(absUrl);
     setShowExistingImageModal(true);
     setShowPhoneModal(false);
+    
+    // CRITICAL: Ensure AvatarGeneratorModal is cleared of any old generation state
+    // when we are showing an existing image from OTP verification.
+    setIsAvatarModalOpen(false);
+    
     if (mail) {
       setVerifiedAt(mail);
     }
@@ -527,6 +532,10 @@ export function AiModalPop({
 
   const handleClosePhoneModal = () => {
     setShowPhoneModal(false);
+    
+    // Also ensure avatar modal is closed to prevent any overlap
+    setIsAvatarModalOpen(false);
+    
     resetForm();
   };
 

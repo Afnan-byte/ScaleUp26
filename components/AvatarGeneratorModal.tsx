@@ -545,6 +545,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
   };
 
   const handleClose = () => {
+    console.log("AvatarGeneratorModal: handleClose resetting state");
     setPreviewType("superhero");
     setGenerationType("superhero");
     setIsGenerating(false);
@@ -552,6 +553,12 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
     setPhotoFile(null);
     setGeneratedImageUrl("");
     setGeneratedUserId("");
+    
+    // Explicitly reset the file input if possible
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+    
     onClose();
   };
 
