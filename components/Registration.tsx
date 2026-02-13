@@ -376,16 +376,15 @@ export default function RegistrationModal({
   return (
     <>
       {/* Overlay with backdrop blur */}
-      <div
-        className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm overflow-y-auto flex items-start md:items-center justify-center"
-      >
+      <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm overflow-y-auto flex items-start md:items-center justify-center p-0 md:p-4">
         {/* Modal Container - Full screen on mobile, split on desktop */}
-        <div className="relative w-full min-h-full md:min-h-0 md:h-auto md:max-h-[90vh] md:max-w-6xl md:rounded-2xl overflow-hidden bg-white shadow-2xl flex flex-col md:flex-row m-0 md:m-4">
+        <div className={`relative w-full ${step === "avatar" ? "min-h-screen md:min-h-0" : "min-h-screen md:min-h-0"} md:h-auto md:max-h-[90vh] md:max-w-6xl md:rounded-2xl overflow-hidden bg-white shadow-2xl flex flex-col ${step === "avatar" ? "" : "md:flex-row"} m-0`}>
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 z-50 text-gray-600 hover:text-red-600 transition p-2 bg-white/80 rounded-full md:bg-transparent"
+            className="absolute top-4 right-4 z-50 text-gray-600 hover:text-red-600 transition p-2 bg-white/90 md:bg-white/80 rounded-full shadow-md md:shadow-none"
+            aria-label="Close modal"
           >
-            <X size={26} />
+            <X size={24} className="md:w-[26px] md:h-[26px]" />
           </button>
 
           {/* LEFT SIDE - Forms */}
@@ -425,7 +424,7 @@ export default function RegistrationModal({
             )}
 
             {step === "avatar" && (
-              <div className="w-full h-full">
+              <div className="w-full h-full min-h-screen md:min-h-[90vh]">
                 <AvatarGeneratorModal
                   isOpen={true}
                   onClose={() => {
@@ -517,18 +516,18 @@ function RegistrationForm({
   setShowPhoneModal: (value: boolean) => void;
 }) {
   return (
-    <div className="p-8 md:p-10 lg:p-12 relative h-full bg-white">
+    <div className="px-6 py-8 sm:px-8 sm:py-10 md:px-10 md:py-12 lg:px-12 lg:py-14 relative h-full bg-white overflow-y-auto">
       <h1
-        className="text-4xl md:text-5xl font-normal text-gray-900 mb-2"
+        className="text-3xl sm:text-4xl md:text-4xl lg:text-5xl font-normal text-gray-900 mb-2"
         style={{ fontFamily: 'Calsans, sans-serif' }}
       >
         Register Now!
       </h1>
-      <p className="text-lg md:text-base mb-8 text-gray-500 ">
+      <p className="text-base sm:text-lg md:text-base mb-6 sm:mb-8 text-gray-500">
         Secure your spot and be part of the excitement! Register now to receive your entry pass.
       </p>
 
-      <form className="space-y-4" onSubmit={handleSubmit}>
+      <form className="space-y-4 sm:space-y-5" onSubmit={handleSubmit}>
         {/* Name */}
         <div>
           <label className="block text-sm font-medium text-gray-900 mb-1.5">
@@ -541,7 +540,7 @@ function RegistrationForm({
             onChange={handleChange}
             onFocus={() => setFocusedField("name")}
             onBlur={() => setFocusedField(null)}
-            className="p-3 w-full lg:w-[85%] border rounded-lg text-gray-700 h-[45px] placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            className="p-3 w-full lg:w-[90%] border rounded-lg text-gray-700 h-[45px] placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
             style={{ ...getBoxStyle("name")}}
             placeholder="Enter your name"
             required
@@ -560,7 +559,7 @@ function RegistrationForm({
             onChange={handleChange}
             onFocus={() => setFocusedField("email")}
             onBlur={() => setFocusedField(null)}
-            className="p-3 w-full lg:w-[85%] border h-[45px] rounded-lg text-gray-700 placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            className="p-3 w-full lg:w-[90%] border h-[45px] rounded-lg text-gray-700 placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
             style={{ ...getBoxStyle("email")}}
             placeholder="Enter your email"
             required
@@ -572,12 +571,12 @@ function RegistrationForm({
           <label className="block text-sm font-medium text-gray-900 mb-1.5">
             Phone Number <span className="text-red-500">*</span>
           </label>
-          <div className="flex gap-2 w-full lg:w-[85%]">
+          <div className="flex gap-2 w-full lg:w-[90%]">
             <select
               name="countryCode"
               value={formData.countryCode}
               onChange={handleChange}
-              className="appearance-none w-24 pl-3 pr-2 border rounded-lg text-gray-700 h-[45px] focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              className="appearance-none w-20 sm:w-24 pl-2 sm:pl-3 pr-1 sm:pr-2 border rounded-lg text-gray-700 h-[45px] focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all text-sm sm:text-base"
               style={{ ...getBoxStyle("countryCode")}}
             >
               <option value="+91">+91</option>
@@ -598,7 +597,7 @@ function RegistrationForm({
               onChange={handleChange}
               onFocus={() => setFocusedField("phone")}
               onBlur={() => setFocusedField(null)}
-              className="flex-1 p-3 border rounded-lg h-[45px] text-gray-700 placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              className="flex-1 p-3 border rounded-lg h-[45px] text-gray-700 placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
               style={{ ...getBoxStyle("phone")}}
               placeholder="Enter your number"
               required
@@ -615,7 +614,7 @@ function RegistrationForm({
             name="district"
             value={formData.district}
             onChange={handleChange}
-            className="pl-3 w-full lg:w-[85%] appearance-none border rounded-lg h-[45px] text-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            className="pl-3 pr-8 w-full lg:w-[90%] appearance-none border rounded-lg h-[45px] text-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
             style={{ ...getBoxStyle("district") }}
             required
           >
@@ -655,7 +654,7 @@ function RegistrationForm({
             name="category"
             value={formData.category}
             onChange={handleChange}
-            className="pl-3 w-full lg:w-[85%] appearance-none border rounded-lg h-[45px] text-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            className="pl-3 pr-8 w-full lg:w-[90%] appearance-none border rounded-lg h-[45px] text-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
             style={{ ...getBoxStyle("category") }}
             required
           >
@@ -684,7 +683,7 @@ function RegistrationForm({
             onChange={handleChange}
             onFocus={() => setFocusedField("organization")}
             onBlur={() => setFocusedField(null)}
-            className="p-3 w-full lg:w-[85%] border rounded-lg text-gray-700 h-[45px] placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            className="p-3 w-full lg:w-[90%] border rounded-lg text-gray-700 h-[45px] placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
             style={{ ...getBoxStyle("organization")}}
             placeholder="Enter your organization"
             required
@@ -696,7 +695,7 @@ function RegistrationForm({
           <label className="block text-sm font-medium text-gray-900 mb-3">
             Did you attend the previous ScaleUp Conclave? <span className="text-red-500">*</span>
           </label>
-          <div className="flex gap-6">
+          <div className="flex gap-4 sm:gap-6">
             <label className="flex items-center gap-2 cursor-pointer group">
               <input
                 type="radio"
@@ -704,10 +703,10 @@ function RegistrationForm({
                 value="Yes"
                 checked={formData.previousAttendance === "Yes"}
                 onChange={handleChange}
-                className="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                className="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 cursor-pointer"
                 required
               />
-              <span className="text-gray-700 group-hover:text-blue-600 transition">Yes</span>
+              <span className="text-gray-700 group-hover:text-blue-600 transition select-none">Yes</span>
             </label>
             <label className="flex items-center gap-2 cursor-pointer group">
               <input
@@ -716,37 +715,36 @@ function RegistrationForm({
                 value="No"
                 checked={formData.previousAttendance === "No"}
                 onChange={handleChange}
-                className="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                className="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 cursor-pointer"
                 required
               />
-              <span className="text-gray-700 group-hover:text-blue-600 transition">No</span>
+              <span className="text-gray-700 group-hover:text-blue-600 transition select-none">No</span>
             </label>
           </div>
         </div>
 
         {/* Submit Button */}
-        <div className="pt-4 pb-10">
+        <div className="pt-4 pb-6 sm:pb-1">
           <button
             type="submit"
-            className="w-full lg:w-[85%] py-4 bg-[#3399FF] text-white rounded-xl font-semibold text-lg hover:bg-blue-600 active:scale-[0.98] transition-all shadow-lg shadow-blue-200"
+            className="w-full lg:w-[90%] py-3.5 sm:py-4 bg-indigo-600 hover:bg-indigo-700  text-white rounded-xl font-semibold text-base sm:text-lg  active:scale-[0.98] transition-all shadow-lg shadow-blue-200"
           >
             Continue to Choose Ticket
           </button>
         </div>
 
-        <div className="text-left pb-2">
+        <div className="text-left pb-4 sm:pb-2">
           <p className="text-sm text-gray-600">
             Already have an account?{' '}
             <span
-  onClick={() => {
-    onClose(); // close registration modal
-    window.dispatchEvent(new CustomEvent("open-aipop"));
-  }}
-  className="text-indigo-600 hover:text-indigo-700 cursor-pointer"
->
-  Go here
-</span>
-
+              onClick={() => {
+                onClose();
+                window.dispatchEvent(new CustomEvent("open-aipop"));
+              }}
+              className="text-indigo-600 hover:text-indigo-700 cursor-pointer font-medium"
+            >
+              Go here
+            </span>
           </p>
         </div>
       </form>
@@ -767,48 +765,49 @@ const TicketTypeModal: React.FC<TicketTypeModalProps> = ({
   const handleSelect = (type: "general" | "vip") => setSelectedTicket(type);
 
   return (
-    <div className="p-8 md:p-10 lg:p-12 h-full relative bg-white">
-      <div className="flex justify-start items-center mb-8">
+    <div className="px-6 py-8 sm:px-8 sm:py-10 md:px-10 md:py-12 lg:px-12 lg:py-14 h-full relative bg-white overflow-y-auto">
+      <div className="flex justify-start items-center mb-6 sm:mb-8">
         <button
           onClick={() => setStep("form")}
-          className="text-gray-700 hover:text-gray-900 transition"
+          className="text-gray-700 hover:text-gray-900 transition p-1 -ml-1"
+          aria-label="Go back"
         >
-          <MoveLeft size={30} />
+          <MoveLeft size={28} className="sm:w-[30px] sm:h-[30px]" />
         </button>
       </div>
 
-      <div className="mb-8">
+      <div className="mb-6 sm:mb-8">
         <h2
-          className="text-3xl md:text-4xl font-normal text-gray-900 mb-2"
+          className="text-3xl sm:text-4xl md:text-4xl lg:text-4xl font-normal text-gray-900 mb-2"
           style={{ fontFamily: 'Calsans, sans-serif' }}
         >
           Choose your ticket type
         </h2>
-        <p className="text-sm md:text-base text-gray-500">
+        <p className="text-sm sm:text-base text-gray-500">
           Both types will have different levels of access
         </p>
       </div>
 
-      <div className="space-y-4 mb-8 max-w-md">
+      <div className="space-y-4 mb-6 sm:mb-8 w-full max-w-md">
         {/* General Pass Card */}
         <div
           onClick={() => handleSelect("general")}
-          className={`group cursor-pointer transition-all duration-200 rounded-2xl p-5 border-2 ${
+          className={`group cursor-pointer transition-all duration-200 rounded-2xl p-4 sm:p-5 border-2 ${
             selectedTicket === "general"
               ? "border-gray-900 shadow-lg"
               : "border-gray-300 hover:border-gray-400"
           }`}
           style={{ fontFamily: 'Calsans, sans-serif' }}
         >
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-xl font-normal text-gray-900">General Pass</h3>
-            <span className="text-xl font-normal text-gray-900">Free</span>
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
+            <h3 className="text-lg sm:text-xl font-normal text-gray-900">General Pass</h3>
+            <span className="text-lg sm:text-xl font-normal text-gray-900">Free</span>
           </div>
           <div className="flex justify-center">
             <img
               src="/assets/images/general.png"
               alt="General Pass"
-              className="w-full max-w-[280px] h-auto rounded-lg shadow-md"
+              className="w-full max-w-[240px] sm:max-w-[280px] h-auto rounded-lg shadow-md"
               onError={(e) => {
                 e.currentTarget.style.display = 'none';
               }}
@@ -819,22 +818,22 @@ const TicketTypeModal: React.FC<TicketTypeModalProps> = ({
         {/* VIP Pass Card */}
         <div
           onClick={() => handleSelect("vip")}
-          className={`group cursor-pointer transition-all duration-200 rounded-2xl p-5 border-2 ${
+          className={`group cursor-pointer transition-all duration-200 rounded-2xl p-4 sm:p-5 border-2 ${
             selectedTicket === "vip"
               ? "border-gray-900 shadow-lg"
               : "border-gray-300 hover:border-gray-400"
           }`}
           style={{ fontFamily: 'Calsans, sans-serif' }}
         >
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-xl font-normal text-gray-900">Vip Pass</h3>
-            <span className="text-xl font-normal text-gray-900">₹10,000</span>
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
+            <h3 className="text-lg sm:text-xl font-normal text-gray-900">VIP Pass</h3>
+            <span className="text-lg sm:text-xl font-normal text-gray-900">₹10,000</span>
           </div>
           <div className="flex justify-center">
             <img
               src="/assets/images/vip.png"
               alt="VIP Pass"
-              className="w-full max-w-[280px] h-auto rounded-lg shadow-md"
+              className="w-full max-w-[240px] sm:max-w-[280px] h-auto rounded-lg shadow-md"
               onError={(e) => {
                 e.currentTarget.style.display = 'none';
               }}
@@ -843,12 +842,11 @@ const TicketTypeModal: React.FC<TicketTypeModalProps> = ({
         </div>
       </div>
 
-      <div className="pt-2 pb-4 max-w-md">
+      <div className="pt-2 pb-4 sm:pb-6 w-full max-w-md">
         <button
           onClick={handleRegister}
           disabled={loading || !selectedTicket || registerStatus === "submitted"}
-          className="w-full py-4 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-          style={{ fontSize: '16px' }}
+          className="w-full py-3.5 sm:py-4  text-white font-semibold rounded-xl bg-indigo-600 hover:bg-indigo-700 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed text-base"
         >
           {loading ? "Processing..." : registerStatus === "submitted" ? "Submitted" : "Continue"}
         </button>
@@ -886,7 +884,7 @@ function SuccessRightSide({ ticketID }: { ticketID: string }) {
         </div>
 
         {/* Center GIF / Avatar */}
-        <div className="flex-1 flex items-center justify-center ">
+        <div className="flex-1 flex items-center justify-center">
           <img
             src="/assets/images/avatar.gif"
             alt="Avatar"
@@ -990,31 +988,30 @@ function SuccessModal({
   const ticketCode = guestData?.id || ticketID;
 
   return (
-    <div className="p-8 md:p-10 lg:p-12 pt-12 md:pt-8 lg:pt-24 lg:mt-10 lg:pb-12 relative h-full bg-white flex flex-col justify-center">
-      <div className="max-w-lg">
+    <div className="px-6 py-8 sm:px-8 sm:py-10 md:px-10 md:py-12 lg:px-12 lg:py-14 relative h-full bg-white flex flex-col justify-start md:justify-center overflow-y-auto">
+      <div className="max-w-lg w-full">
         <h1
-          className="text-4xl md:text-5xl font-normal text-gray-900 mb-4"
+          className="text-3xl sm:text-4xl md:text-4xl lg:text-5xl font-normal text-gray-900 mb-3 sm:mb-4"
           style={{ fontFamily: 'Calsans, sans-serif' }}
         >
           Congrats your ticket has been generated
         </h1>
 
         {loading ? (
-          <div className="flex items-center gap-2 mb-8">
+          <div className="flex items-center gap-2 mb-6 sm:mb-8">
             <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-indigo-600"></div>
-            <p className="text-base text-gray-600">Loading your ticket details...</p>
+            <p className="text-sm sm:text-base text-gray-600">Loading your ticket details...</p>
           </div>
         ) : (
-          <p className="text-base text-gray-600 mb-8">
-            Great news! Your ticket has been sent to your email{" "}
-            and WhatsApp along with the invoice. Please check them to confirm.
+          <p className="text-sm sm:text-base text-gray-600 mb-6 sm:mb-8">
+            Great news! Your ticket has been sent to your email and WhatsApp along with the invoice. Please check them to confirm.
           </p>
         )}
 
         {/* Ticket Image Preview */}
-        <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-4 mb-6 border border-gray-200">
+        <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-3 sm:p-4 mb-4 sm:mb-6 border border-gray-200">
           {loading ? (
-            <div className="bg-gray-200 rounded-xl h-64 flex items-center justify-center">
+            <div className="bg-gray-200 rounded-xl h-48 sm:h-64 flex items-center justify-center">
               <div className="text-center">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-600 mx-auto mb-2"></div>
                 <p className="text-sm text-gray-600">Generating your ticket...</p>
@@ -1031,15 +1028,15 @@ function SuccessModal({
                   e.currentTarget.style.display = 'none';
                   const parent = e.currentTarget.parentElement;
                   if (parent) {
-                    parent.innerHTML = `<div class="bg-gray-200 rounded-xl h-64 flex items-center justify-center">
-                      <p class="text-gray-600 text-sm">Ticket image unavailable. Check your email for the ticket.</p>
+                    parent.innerHTML = `<div class="bg-gray-200 rounded-xl h-48 sm:h-64 flex items-center justify-center">
+                      <p class="text-gray-600 text-sm px-4 text-center">Ticket image unavailable. Check your email for the ticket.</p>
                     </div>`;
                   }
                 }}
               />
             </div>
           ) : (
-            <div className="bg-gray-200 rounded-xl h-64 flex items-center justify-center">
+            <div className="bg-gray-200 rounded-xl h-48 sm:h-64 flex items-center justify-center">
               <div className="text-center px-4">
                 <p className="text-gray-600 text-sm mb-2">Ticket image not available</p>
                 <p className="text-gray-500 text-xs">Your ticket has been sent to your email</p>
@@ -1053,8 +1050,7 @@ function SuccessModal({
           <a
             href={`/api/proxy-image?url=${encodeURIComponent(ticketImageUrl)}&filename=scaleup-ticket-${ticketCode}.png&disposition=attachment`}
             download={`scaleup-ticket-${ticketCode}.png`}
-            className="w-full py-3 bg-gray-100 text-gray-900 font-semibold rounded-xl hover:bg-gray-200 transition-all shadow-sm mb-4 flex items-center justify-center gap-2"
-            style={{ fontSize: '14px' }}
+            className="w-full py-3 bg-gray-100 text-gray-900 font-semibold rounded-xl hover:bg-gray-200 transition-all shadow-sm mb-3 sm:mb-4 flex items-center justify-center gap-2 text-sm"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -1067,7 +1063,7 @@ function SuccessModal({
         <button
           onClick={() => setStep("avatar")}
           disabled={loading}
-          className="w-full py-4 mb-10 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full py-3.5 sm:py-4 mb-6 sm:mb-10 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed text-base"
         >
           {loading ? "Loading..." : "Next Step : Generate your AI Avatar"}
         </button>
