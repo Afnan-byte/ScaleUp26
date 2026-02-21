@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+
+/* Custom fonts */
 @font-face {
   font-family: "Gilmer";
   src: url("/fonts/Gilmer-Bold.woff2") format("woff2");
@@ -8,6 +9,7 @@
   font-style: normal;
   font-display: swap;
 }
+
 @font-face {
   font-family: "CalSans";
   src: url("/fonts/CalSans-Regular.ttf") format("truetype");
@@ -15,9 +17,26 @@
   font-style: normal;
   font-display: swap;
 }
+/* Plus Jakarta Sans (local file) */
+@font-face {
+  font-family: "Plus Jakarta Sans";
+  src: url("/fonts/PlusJakartaSans-VariableFont_wght.ttf") format("truetype");
+  font-weight: 200 800;
+  font-style: normal;
+  font-display: swap;
+}
+
 
 /*  ---break--- */
 @custom-variant dark (&:is(.dark *));
+
+body {
+  font-family: "Plus Jakarta Sans", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  margin: 0;
+  padding: 0;
+}
 
 /*  Custom Colors */
 :root {

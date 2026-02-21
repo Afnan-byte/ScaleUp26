@@ -9,8 +9,8 @@ import Navbar from "@/components/Navbar";
 import { Whatsapp } from "@/components/whatsapp";
 import Marque from "@/components/Marque";
 import Speaker from "@/components/Speakers"
-import Theme from "@/components/Theme"
-
+import PartnersSection from "@/components/Partners";
+import ScaleupEventRoster from "@/components/EventRoster";
 
 export default function Home() {
   const [open, setOpen] = useState(false);
@@ -39,7 +39,8 @@ export default function Home() {
       
       <Banner />
       <Involved />
-      <Theme/>
+      <ScaleupEventRoster/>
+      <PartnersSection/>
       <Footer />
       <Whatsapp open={open} setOpen={setOpen} />
     </main>
